@@ -236,6 +236,7 @@ struct ieee80211_supported_band { struct ieee80211_channel *channels; struct iee
 struct ieee80211_hw { void *priv; };
 struct ieee80211_vif { enum nl80211_iftype type; u8 addr[ETH_ALEN]; };
 struct ieee80211_ops { int x; };
+struct ieee80211_hdr; struct ieee80211_key_conf; struct ieee80211_sta;
 struct sk_buff { u8 *data; unsigned int len; };
 struct wiphy { int x; };
 struct regulatory_request { int x; };

@@ -59,6 +59,6 @@ Avancement :
 - [x] Initialisation de la puce : révisions, EEPROM, adresse MAC, réinitialisation sur les 13 canaux
 - [x] Banc d'essai autonome sur le 701 et traces comparées avec `ath5k`
 - [x] Réception : la puce reçoit les balises ; recherche des réseaux sur les 13 canaux
-- [ ] Émission, authentification et association (réseau ouvert)
+- [x] Émission, authentification, association (réseau ouvert) et données : le 701 obtient une offre DHCP de la box
 - [ ] WPA2
 - [ ] Enveloppe NDIS 2.0 pour OS/2, utilitaire graphique, accès SSH dans ArcaOS
