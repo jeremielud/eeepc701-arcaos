@@ -26,4 +26,16 @@ call stream f, 'c', 'close'
 '@echo === ping 192.168.1.1 >>' f
 '@ping 192.168.1.1 56 4 >>' f '2>&1'
 '@echo === fin >>' f
+call stream f, 'c', 'close'
+/* Nouvelle version du pilote sur la clé : installée pour le prochain démarrage. */
+boot = left(value('COMSPEC',, 'OS2ENVIRONMENT'), 2)
+neuf = cle'\ATHOS\ATHOS.OS2'; actuel = boot'\IBMCOM\MACS\ATHOS.OS2'
+if stream(neuf, 'c', 'query datetime') <> stream(actuel, 'c', 'query datetime') |,
+   stream(neuf, 'c', 'query size') <> stream(actuel, 'c', 'query size') then do
+  '@copy' neuf boot'\IBMCOM\MACS\ >nul'
+  '@copy' cle'\ATHOS\ATHOSLOG.EXE' boot'\OS2\APPS\ >nul'
+  '@copy' cle'\ATHOS\ATHOSJRN.CMD' boot'\OS2\APPS\ >nul'
+  call lineout f, '=== nouvelle version du pilote installée (code' rc') : redémarrer ArcaOS'
+  call stream f, 'c', 'close'
+end
 exit 0

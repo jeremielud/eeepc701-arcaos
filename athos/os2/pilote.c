@@ -193,18 +193,25 @@ int __syscall NdisDriverProcessParms(struct ModCfg *pConfig)
 /* Liaison avec la pile réseau : on rejoint le réseau configuré. */
 int __syscall NdisDriverOpen(void)
 {
-	int n;
+	static const char *secu[] = { "ouvert", "WEP", "WPA", "WPA2" };
+	int essai, n, i;
 
 	if (!ssid_voulu[0]) {
 		os_log("athos : aucun SSID dans PROTOCOL.INI\n");
 		return 0;
 	}
-	n = wlan_rechercher(&carte, 200);
-	os_log("athos : %d réseaux visibles\n", n);
-	if (wlan_rejoindre(&carte, ssid_voulu) == 0)
-		os_log("athos : associé à « %s »\n", ssid_voulu);
-	else
-		os_log("athos : association à « %s » impossible\n", ssid_voulu);
+	for (essai = 1; essai <= 4; essai++) {
+		n = wlan_rechercher(&carte, 400);
+		os_log("athos : recherche %d, %d réseaux :\n", essai, n);
+		for (i = 0; i < n; i++)
+			os_log("athos :   %s, canal %d, %d dBm, %s\n", carte.reseaux[i].ssid[0] ? carte.reseaux[i].ssid : "(caché)",
+			       carte.reseaux[i].canal, carte.reseaux[i].signal, secu[carte.reseaux[i].securite & 3]);
+		if (wlan_rejoindre(&carte, ssid_voulu) == 0) {
+			os_log("athos : associé à « %s »\n", ssid_voulu);
+			return 0;
+		}
+	}
+	os_log("athos : association à « %s » impossible\n", ssid_voulu);
 	return 0;
 }
 
@@ -283,6 +290,12 @@ static void StrategyInit(REQPACKET *prp)
 	if (rc < 0) {
 		os_log("athos : section ATHOS$ absente de PROTOCOL.INI (%d)\n", rc);
 		goto echec;
+	}
+	{
+		/* Précision des délais du kit (ils servent à régler la radio). */
+		ULONG t0 = TimeGetMs();
+		os_udelay(200000);
+		os_log("athos : étalonnage, 200 ms d'attente = %lu ms\n", TimeGetMs() - t0);
 	}
 	if (trouver_carte())
 		goto echec;
