@@ -15,6 +15,14 @@
 #include <errno.h>
 #include "osdep.h"
 
+/* La bibliothèque C définit toujours __BIG_ENDIAN (constante 4321) ; le noyau Linux ne
+ * le définit que sur les machines gros-boutistes, et ath5k s'en sert pour faire inverser
+ * les descripteurs par la puce. Le x86 est petit-boutiste. */
+#undef __BIG_ENDIAN
+#ifndef __LITTLE_ENDIAN
+#define __LITTLE_ENDIAN 1234
+#endif
+
 /* --- Types ------------------------------------------------------------------ */
 typedef uint8_t u8;   typedef int8_t s8;
 typedef uint16_t u16; typedef int16_t s16;

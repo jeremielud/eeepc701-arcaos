@@ -14,10 +14,11 @@ def athos(p):
     d={}
     for l in open(p):
         f=l.split()
+        if f and f[0]=='M': break          # début de l'écoute : état à comparer
         if f and f[0]=='W': d[int(f[1],16)]=int(f[2],16)
     return d
 k=ath5k('ath5k-mmio.txt'); m=athos('trace-athos.txt')
-ign=set(range(0x8800,0x9000))  # cache de clés
+ign=set(range(0x8800,0x9800))  # cache de clés
 for a in sorted(set(k)|set(m)):
     if a in ign: continue
     kv,mv=k.get(a),m.get(a)

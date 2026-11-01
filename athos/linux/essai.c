@@ -243,6 +243,8 @@ int main(int argc, char **argv)
 			continue;
 		}
 		ath5k_hw_set_lladdr(ah, ah->common.macaddr);
+		if (os_trace)
+			fprintf(os_trace, "M ecoute canal %d\n", c + 1);
 		ret = rx_ecouter(ah, c + 1, ms);
 		if (c == 0 || c == 10) {
 			u32 *w = (u32 *)rx[0].desc;
