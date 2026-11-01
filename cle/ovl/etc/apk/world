@@ -1,0 +1,16 @@
+alpine-base
+coreutils
+dosfstools
+e2fsprogs
+iw
+kbd-bkeymaps
+lsblk
+openssh
+openssh-server-common-openrc
+pciutils
+tmux
+usbutils
+util-linux
+util-linux-misc
+wireless-tools
+wpa_supplicant

@@ -1,0 +1,213 @@
+[    3.598756] uhci_hcd 0000:00:1d.3: new USB bus registered, assigned bus number 5
+[    3.599098] uhci_hcd 0000:00:1d.3: detected 2 ports
+[    3.599198] uhci_hcd 0000:00:1d.3: irq 16, io port 0x0000e880
+[    3.599515] usb usb5: New USB device found, idVendor=1d6b, idProduct=0001, bcdDevice= 6.18
+[    3.599533] usb usb5: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[    3.599546] usb usb5: Product: UHCI Host Controller
+[    3.599557] usb usb5: Manufacturer: Linux 6.18.58-0-lts uhci_hcd
+[    3.599567] usb usb5: SerialNumber: 0000:00:1d.3
+[    3.601269] hub 5-0:1.0: USB hub found
+[    3.601366] hub 5-0:1.0: 2 ports detected
+[    3.706219] libata version 3.00 loaded.
+[    3.756377] ahci 0000:00:1f.2: controller is in combined mode, can't enable AHCI mode
+[    3.780417] ata_piix 0000:00:1f.2: MAP [ P0 P2 IDE IDE ]
+[    3.789368] scsi host0: ata_piix
+[    3.792177] scsi host1: ata_piix
+[    3.792551] ata1: SATA max UDMA/133 cmd 0x1f0 ctl 0x3f6 bmdma 0xffa0 irq 14 lpm-pol 0
+[    3.792572] ata2: PATA max UDMA/100 cmd 0x170 ctl 0x376 bmdma 0xffa8 irq 15 lpm-pol 0
+[    3.799897] usb 1-3: new high-speed USB device number 2 using ehci-pci
+[    3.929436] usb 1-3: New USB device found, idVendor=13fe, idProduct=3600, bcdDevice= 1.00
+[    3.929461] usb 1-3: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[    3.929476] usb 1-3: Product: USB DISK 2.0
+[    3.929487] usb 1-3: Manufacturer:         
+[    3.929497] usb 1-3: SerialNumber: 079B0B007AAF97C6
+[    3.930981] usb-storage 1-3:1.0: USB Mass Storage device detected
+[    3.932066] usb-storage 1-3:1.0: Quirks match for vid 13fe pid 3600: 4000
+[    3.932333] scsi host2: usb-storage 1-3:1.0
+[    3.963846] ata2.00: CFA: SILICONMOTION SM223AC, , max UDMA/66
+[    3.963876] ata2.00: 7815024 sectors, multi 0: LBA 
+[    3.969570] scsi 1:0:0:0: Direct-Access     ATA      SILICONMOTION SM n/a  PQ: 0 ANSI: 5
+[    3.971646] sd 1:0:0:0: [sda] 7815024 512-byte logical blocks: (4.00 GB/3.73 GiB)
+[    3.971703] sd 1:0:0:0: [sda] Write Protect is off
+[    3.971720] sd 1:0:0:0: [sda] Mode Sense: 00 3a 00 00
+[    3.971782] sd 1:0:0:0: [sda] Write cache: disabled, read cache: enabled, doesn't support DPO or FUA
+[    3.972293] sd 1:0:0:0: [sda] Preferred minimum I/O size 512 bytes
+[    3.978807] sd 1:0:0:0: [sda] Attached SCSI disk
+[    4.047911] usb 1-5: new high-speed USB device number 3 using ehci-pci
+[    4.120587] ACPI: video: Video Device [VGA] (multi-head: yes  rom: no  post: no)
+[    4.121923] input: Video Bus as /devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/input/input2
+[    4.171510] usbcore: registered new interface driver uas
+[    4.180587] usb 1-5: New USB device found, idVendor=0951, idProduct=1606, bcdDevice= 1.00
+[    4.180626] usb 1-5: New USB device strings: Mfr=1, Product=2, SerialNumber=4
+[    4.180639] usb 1-5: Product: UB6225
+[    4.180650] usb 1-5: Manufacturer: ENE
+[    4.180661] usb 1-5: SerialNumber: 146030377350
+[    4.183006] usb-storage 1-5:1.0: USB Mass Storage device detected
+[    4.186055] scsi host3: usb-storage 1-5:1.0
+[    4.303925] usb 1-8: new high-speed USB device number 4 using ehci-pci
+[    4.432937] usb 1-8: New USB device found, idVendor=eb1a, idProduct=2761, bcdDevice=12.12
+[    4.432974] usb 1-8: New USB device strings: Mfr=0, Product=0, SerialNumber=0
+[    4.943669] scsi 2:0:0:0: Direct-Access              USB DISK 2.0     PMAP PQ: 0 ANSI: 0 CCS
+[    4.950494] sd 2:0:0:0: [sdb] 31277056 512-byte logical blocks: (16.0 GB/14.9 GiB)
+[    4.951667] sd 2:0:0:0: [sdb] Write Protect is off
+[    4.951693] sd 2:0:0:0: [sdb] Mode Sense: 23 00 00 00
+[    4.952482] sd 2:0:0:0: [sdb] No Caching mode page found
+[    4.952509] sd 2:0:0:0: [sdb] Assuming drive cache: write through
+[    4.967772]  sdb: sdb1
+[    4.969614] sd 2:0:0:0: [sdb] Attached SCSI removable disk
+[    5.199036] scsi 3:0:0:0: Direct-Access     USB2.0   CardReader SD0   0100 PQ: 0 ANSI: 0
+[    5.205964] sd 3:0:0:0: [sdc] Media removed, stopped polling
+[    5.209727] sd 3:0:0:0: [sdc] Attached SCSI removable disk
+[    7.229128] FAT-fs (sdb1): utf8 is not a recommended IO charset for FAT filesystems, filesystem will be case sensitive!
+[    7.674493] Mounting boot media: ok.
+[    7.683370] Loading user settings from /media/sdb1/eeepc.apkovl.tar.gz...
+[    7.734015] Loading user settings from /media/sdb1/eeepc.apkovl.tar.gz: ok.
+[    7.920466] Installing packages to root filesystem...
+[    8.347008] random: crng init done
+[   11.129709] WARNING: apkovl packages install completed with errors...
+[   11.134332] Installing packages to root filesystem: ok.
+[   12.555678] loop0: detected capacity change from 0 to 527472
+[   15.701942] ACPI: AC: AC Adapter [AC0] (on-line)
+[   16.358063] eeepc_laptop: Eee PC Hotkey Driver
+[   16.358094] eeepc_laptop: model 701 does not officially support setting cpu speed
+[   16.358103] eeepc_laptop: cpufv disabled to avoid instability
+[   16.358134] eeepc_laptop: Hotkey init flags 0x41
+[   16.360516] eeepc_laptop: TYPE (2000000) not reported by BIOS, enabling anyway
+[   16.360547] eeepc_laptop: Get control methods supported: 0x2101711
+[   16.381394] input: Asus EeePC extra buttons as /devices/platform/eeepc/input/input3
+[   16.406948] eeepc_laptop: Unable to find port
+[   16.713891] input: Lid Switch as /devices/platform/PNP0C0D:00/input/input4
+[   16.715946] ACPI: button: Lid Switch [LID]
+[   16.716451] input: Sleep Button as /devices/platform/PNP0C0E:00/input/input5
+[   16.716677] ACPI: button: Sleep Button [SLPB]
+[   16.730316] input: Power Button as /devices/platform/PNP0C0C:00/input/input6
+[   16.730524] ACPI: button: Power Button [PWRB]
+[   17.091264] thermal LNXTHERM:00: registered as thermal_zone0
+[   17.091297] ACPI: thermal: Thermal Zone [TZ00] (49 C)
+[   18.603036] cfg80211: Loading compiled-in X.509 certificates for regulatory database
+[   18.622598] Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+[   18.643979] Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+[   19.508978] ath5k 0000:01:00.0: can't disable ASPM; OS doesn't have ASPM control
+[   19.509459] ath5k 0000:01:00.0: registered as 'phy0'
+[   20.020898] ath: EEPROM regdomain: 0x60
+[   20.020918] ath: EEPROM indicates we should expect a direct regpair map
+[   20.020931] ath: Country alpha2 being used: 00
+[   20.020939] ath: Regpair used: 0x60
+[   20.022027] ieee80211 phy0: Selected rate control algorithm 'minstrel_ht'
+[   20.045048] ath5k: phy0: Atheros AR2425 chip found (MAC: 0xe2, PHY: 0x70)
+[   20.632860] Linux agpgart interface v0.103
+[   21.214951] ACPI: bus type drm_connector registered
+[   24.958013] i915 0000:00:02.0: [drm] Found i915gm (device ID 2592) integrated display version 3.00 stepping N/A
+[   24.958609] pci 0000:00:00.0: Intel 915GM Chipset
+[   24.958659] resource: avoiding allocation from e820 entry [mem 0x1f7e0000-0x1fffffff]
+[   24.958687] pci 0000:00:00.0: detected gtt size: 262144K total, 262144K mappable
+[   24.958975] pci 0000:00:00.0: detected 8192K stolen memory
+[   24.959965] i915 0000:00:02.0: vgaarb: deactivate vga console
+[   24.965092] Console: switching to colour dummy device 80x25
+[   24.968030] resource: resource sanity check: requesting [mem 0x000c0000-0x000dffff], which spans more than PCI Bus 0000:00 [mem 0x000d0000-0x000dffff window]
+[   24.968075] caller pci_map_rom+0x60/0x270 mapping multiple BARs
+[   24.989205] i915 0000:00:02.0: vgaarb: VGA decodes changed: olddecodes=io+mem,decodes=io+mem:owns=io+mem
+[   25.066119] i915 0000:00:02.0: [drm] Initialized overlay support.
+[   25.094166] [drm] Initialized i915 1.6.0 for 0000:00:02.0 on minor 0
+[   26.333351] Console: switching to colour frame buffer device 100x30
+[   26.342100] i915 0000:00:02.0: [drm] fb0: i915drmfb frame buffer device
+[   26.516977] ACPI Warning: SystemIO range 0x0000000000000828-0x000000000000082F conflicts with OpRegion 0x0000000000000800-0x000000000000087F (\PMIO) (20250807/utaddress-204)
+[   26.517034] ACPI Warning: SystemIO range 0x0000000000000828-0x000000000000082F conflicts with OpRegion 0x0000000000000800-0x000000000000083F (\_SB.PCI0.SBRG.PMS0) (20250807/utaddress-204)
+[   26.517060] ACPI: OSL: Resource conflict; ACPI support missing from driver?
+[   26.517073] ACPI Warning: SystemIO range 0x00000000000004B0-0x00000000000004BF conflicts with OpRegion 0x0000000000000480-0x00000000000004BF (\_SB.PCI0.SBRG.GPBX) (20250807/utaddress-204)
+[   26.517098] ACPI: OSL: Resource conflict; ACPI support missing from driver?
+[   26.517107] ACPI Warning: SystemIO range 0x0000000000000480-0x00000000000004AF conflicts with OpRegion 0x0000000000000480-0x00000000000004BF (\_SB.PCI0.SBRG.GPBX) (20250807/utaddress-204)
+[   26.517132] ACPI: OSL: Resource conflict; ACPI support missing from driver?
+[   26.517139] lpc_ich: Resource conflict(s) found affecting gpio_ich
+[   26.760116] intel_rng: FWH not detected
+[   26.815932] intel_rng: FWH not detected
+[   26.986047] iTCO_vendor_support: vendor-support=0
+[   27.257289] iTCO_wdt iTCO_wdt.1.auto: Found a ICH6-M TCO device (Version=2, TCOBASE=0x0860)
+[   27.261020] iTCO_wdt iTCO_wdt.1.auto: initialized. heartbeat=30 sec (nowayout=0)
+[   28.490382] ACPI Warning: SystemIO range 0x0000000000000400-0x000000000000041F conflicts with OpRegion 0x0000000000000400-0x000000000000040F (\SMRG) (20250807/utaddress-204)
+[   28.490433] ACPI Warning: SystemIO range 0x0000000000000400-0x000000000000041F conflicts with OpRegion 0x0000000000000400-0x000000000000040F (\_SB.PCI0.SBRG.SMRG) (20250807/utaddress-204)
+[   28.490460] ACPI: OSL: Resource conflict; ACPI support missing from driver?
+[   28.653178] input: PC Speaker as /devices/platform/pcspkr/input/input7
+[   29.087899] snd_hda_codec_alc662 hdaudioC0D0: autoconfig for ALC662 rev1: line_outs=1 (0x14/0x0/0x0/0x0/0x0) type:speaker
+[   29.087935] snd_hda_codec_alc662 hdaudioC0D0:    speaker_outs=0 (0x0/0x0/0x0/0x0/0x0)
+[   29.087950] snd_hda_codec_alc662 hdaudioC0D0:    hp_outs=1 (0x1b/0x0/0x0/0x0/0x0)
+[   29.087965] snd_hda_codec_alc662 hdaudioC0D0:    mono: mono_out=0x0
+[   29.087975] snd_hda_codec_alc662 hdaudioC0D0:    inputs:
+[   29.087987] snd_hda_codec_alc662 hdaudioC0D0:      Mic=0x18
+[   29.087999] snd_hda_codec_alc662 hdaudioC0D0:      Internal Mic=0x19
+[   29.180195] input: HDA Intel Mic as /devices/pci0000:00/0000:00:1b.0/sound/card0/input9
+[   29.188233] input: HDA Intel Headphone as /devices/pci0000:00/0000:00:1b.0/sound/card0/input10
+[   29.624857] mc: Linux media interface: v0.10
+[   29.937078] videodev: Linux video capture interface: v2.00
+[   30.434038] uvcvideo 1-8:1.0: Found UVC 1.00 device <unnamed> (eb1a:2761)
+[   30.436365] psmouse serio1: synaptics: Touchpad model: 1, fw: 6.5, id: 0x1c0b1, caps: 0xa04751/0xa00000/0x0/0x0, board id: 0, fw id: 409168
+[   30.446083] usbcore: registered new interface driver uvcvideo
+[   30.555949] input: SynPS/2 Synaptics TouchPad as /devices/platform/i8042/serio1/input/input8
+[   31.022976] mousedev: PS/2 mouse device common for all mice
+[   31.961877] intel_rng: FWH not detected
+[   31.990097] intel_rng: FWH not detected
+[   32.300009] NET: Registered PF_PACKET protocol family
+[   36.549067] wlan0: authenticate with xx:xx:xx:xx:xx:xx (local address=00:15:af:9f:e7:8d)
+[   36.549103] wlan0: send auth to xx:xx:xx:xx:xx:xx (try 1/3)
+[   36.550673] wlan0: xx:xx:xx:xx:xx:xx denied authentication (status 33)
+[   37.638338] wlan0: authenticate with xx:xx:xx:xx:xx:xx (local address=00:15:af:9f:e7:8d)
+[   37.638372] wlan0: send auth to xx:xx:xx:xx:xx:xx (try 1/3)
+[   37.640271] wlan0: xx:xx:xx:xx:xx:xx denied authentication (status 33)
+[   39.125242] wlan0: authenticate with xx:xx:xx:xx:xx:xx (local address=00:15:af:9f:e7:8d)
+[   39.125277] wlan0: send auth to xx:xx:xx:xx:xx:xx (try 1/3)
+[   39.128172] wlan0: xx:xx:xx:xx:xx:xx denied authentication (status 33)
+[   41.117243] wlan0: authenticate with xx:xx:xx:xx:xx:xx (local address=00:15:af:9f:e7:8d)
+[   41.117279] wlan0: send auth to xx:xx:xx:xx:xx:xx (try 1/3)
+[   41.118899] wlan0: xx:xx:xx:xx:xx:xx denied authentication (status 33)
+[   51.101887] wlan0: authenticate with xx:xx:xx:xx:xx:xx (local address=00:15:af:9f:e7:8d)
+[   51.101920] wlan0: send auth to xx:xx:xx:xx:xx:xx (try 1/3)
+[   51.103498] wlan0: xx:xx:xx:xx:xx:xx denied authentication (status 33)
+[   70.207116] wlan0: authenticate with xx:xx:xx:xx:xx:xx (local address=00:15:af:9f:e7:8d)
+[   70.207151] wlan0: send auth to xx:xx:xx:xx:xx:xx (try 1/3)
+[   70.209079] wlan0: xx:xx:xx:xx:xx:xx denied authentication (status 33)
+[   71.294066] wlan0: authenticate with xx:xx:xx:xx:xx:xx (local address=00:15:af:9f:e7:8d)
+[   71.294102] wlan0: send auth to xx:xx:xx:xx:xx:xx (try 1/3)
+[   71.295674] wlan0: xx:xx:xx:xx:xx:xx denied authentication (status 33)
+[   72.781996] wlan0: authenticate with xx:xx:xx:xx:xx:xx (local address=00:15:af:9f:e7:8d)
+[   72.782031] wlan0: send auth to xx:xx:xx:xx:xx:xx (try 1/3)
+[   72.783608] wlan0: xx:xx:xx:xx:xx:xx denied authentication (status 33)
+[   74.773600] wlan0: authenticate with xx:xx:xx:xx:xx:xx (local address=00:15:af:9f:e7:8d)
+[   74.773635] wlan0: send auth to xx:xx:xx:xx:xx:xx (try 1/3)
+[   74.775613] wlan0: xx:xx:xx:xx:xx:xx denied authentication (status 33)
+[   84.766241] wlan0: authenticate with xx:xx:xx:xx:xx:xx (local address=00:15:af:9f:e7:8d)
+[   84.766274] wlan0: send auth to xx:xx:xx:xx:xx:xx (try 1/3)
+[   84.767867] wlan0: xx:xx:xx:xx:xx:xx denied authentication (status 33)
+[  103.869245] wlan0: authenticate with xx:xx:xx:xx:xx:xx (local address=00:15:af:9f:e7:8d)
+[  103.869283] wlan0: send auth to xx:xx:xx:xx:xx:xx (try 1/3)
+[  103.870872] wlan0: xx:xx:xx:xx:xx:xx denied authentication (status 33)
+[  104.958238] wlan0: authenticate with xx:xx:xx:xx:xx:xx (local address=00:15:af:9f:e7:8d)
+[  104.958274] wlan0: send auth to xx:xx:xx:xx:xx:xx (try 1/3)
+[  104.959864] wlan0: xx:xx:xx:xx:xx:xx denied authentication (status 33)
+[  106.446229] wlan0: authenticate with xx:xx:xx:xx:xx:xx (local address=00:15:af:9f:e7:8d)
+[  106.446264] wlan0: send auth to xx:xx:xx:xx:xx:xx (try 1/3)
+[  106.447887] wlan0: xx:xx:xx:xx:xx:xx denied authentication (status 33)
+[  108.438087] wlan0: authenticate with xx:xx:xx:xx:xx:xx (local address=00:15:af:9f:e7:8d)
+[  108.438122] wlan0: send auth to xx:xx:xx:xx:xx:xx (try 1/3)
+[  108.541902] wlan0: send auth to xx:xx:xx:xx:xx:xx (try 2/3)
+[  108.557552] wlan0: send auth to xx:xx:xx:xx:xx:xx (try 3/3)
+[  108.573572] wlan0: authentication with xx:xx:xx:xx:xx:xx timed out
+[  125.525242] wlan0: authenticate with xx:xx:xx:xx:xx:xx (local address=00:15:af:9f:e7:8d)
+[  125.525277] wlan0: send auth to xx:xx:xx:xx:xx:xx (try 1/3)
+[  125.527242] wlan0: xx:xx:xx:xx:xx:xx denied authentication (status 33)
+[  145.520243] wlan0: authenticate with xx:xx:xx:xx:xx:xx (local address=00:15:af:9f:e7:8d)
+[  145.520276] wlan0: send auth to xx:xx:xx:xx:xx:xx (try 1/3)
+[  145.521886] wlan0: xx:xx:xx:xx:xx:xx denied authentication (status 33)
+[  158.430324] wlan0: authenticate with xx:xx:xx:xx:xx:xx (local address=00:15:af:9f:e7:8d)
+[  158.430361] wlan0: send auth to xx:xx:xx:xx:xx:xx (try 1/3)
+[  158.432122] wlan0: authenticated
+[  158.432941] wlan0: associate with xx:xx:xx:xx:xx:xx (try 1/3)
+[  158.436468] wlan0: RX AssocResp from xx:xx:xx:xx:xx:xx (capab=0x1401 status=0 aid=16)
+[  158.436690] wlan0: associated
+[  158.437739] ath: EEPROM regdomain: 0x80fa
+[  158.437764] ath: EEPROM indicates we should expect a country code
+[  158.437773] ath: doing EEPROM country->regdmn map search
+[  158.437780] ath: country maps to regdmn code: 0x37
+[  158.437788] ath: Country alpha2 being used: FR
+[  158.437796] ath: Regpair used: 0x37
+[  158.437804] ath: regdomain 0x80fa dynamically updated by country element
+[  158.470880] wlan0: Limiting TX power to 20 (20 - 0) dBm as advertised by xx:xx:xx:xx:xx:xx

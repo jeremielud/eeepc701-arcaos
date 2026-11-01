@@ -1,0 +1,36 @@
+# Images et ISO : volumineuses, et l'image ArcaOS contient la licence nominative.
+*.img
+*.img.gz
+*.iso
+*.7z
+/iso-extrait/
+/sauvegarde-*
+/journaux/
+/ecrans/
+/build/
+# Outils tiers téléchargés (voir LISEZMOI) : OpenWatcom, kit ACPI d'Arca Noae…
+/watcom/
+/telechargements/
+# Clé USB : contenu reconstruit par cle/preparer-racine.sh
+/cle/iso/
+/cle/idx/
+/cle/racine/
+/cle/*.png
+/cle/test.log
+/cle/garder.txt
+# Secrets
+**/ssh_host_*_key
+**/ssh_host_*_key.pub
+# Produits de compilation
+*.o
+*.obj
+*.exe
+*.EXE
+/apport/EEEKEYS.EXE
+/apport/*.TXT
+vm.log
+mon.sock
+test.sock
+souris.pos
+athos/linux/lire
+kvm-reset.log

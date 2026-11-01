@@ -1,0 +1,274 @@
+#!/bin/sh
+# eeepc-accueil : écran d'accueil de la clé USB Eee PC 701.
+# 1. connecte le 701 au réseau (câble s'il est branché, sinon Wi-Fi choisi à l'écran) ;
+# 2. ouvre l'accès SSH (clé de Claude uniquement) et affiche l'adresse ;
+# 3. propose d'installer ArcaOS sur le disque interne.
+
+IMAGE_DIR=/media/eeepc/arcaos
+# Réseau Wi-Fi essayé d'office au démarrage (ouvert, sans mot de passe).
+WIFI_DEFAUT="Livebox-F550"
+WIFI_DEFAUT_CLE=""
+LOG=/var/log/eeepc-accueil.log
+export TERM=linux
+
+trace() { echo "$(date '+%H:%M:%S') $*" >> "$LOG"; }
+
+titre() {
+	clear
+	echo "=================================================================="
+	echo "      Eee PC 701  -  clé d'installation ArcaOS et d'accès"
+	echo "=================================================================="
+	echo
+}
+
+attendre_touche() {
+	printf '\n(Entrée pour continuer) '
+	read -r _
+}
+
+# Partition de la clé qui contient l'image ArcaOS, montée sur /media/eeepc.
+monter_cle() {
+	mountpoint -q /media/eeepc && return 0
+	mkdir -p /media/eeepc
+	for dev in /dev/sd?[0-9]; do
+		[ -b "$dev" ] || continue
+		if mount -o ro "$dev" /media/eeepc 2>/dev/null; then
+			[ -f "$IMAGE_DIR/eeepc701-arcaos.img.gz" ] && return 0
+			umount /media/eeepc
+		fi
+	done
+	# Déjà montée par Alpine ailleurs (média de démarrage) ?
+	for m in /media/*; do
+		if [ -f "$m/arcaos/eeepc701-arcaos.img.gz" ]; then
+			mount --bind "$m" /media/eeepc && return 0
+		fi
+	done
+	return 1
+}
+
+adresse() {
+	ip -4 -o addr show scope global 2>/dev/null | awk '{print $2" "$4}' | sed 's|/.*||'
+}
+
+ethernet() {
+	modprobe atl2 2>/dev/null
+	ip link set eth0 up 2>/dev/null || return 1
+	sleep 3
+	[ "$(cat /sys/class/net/eth0/carrier 2>/dev/null)" = 1 ] || return 1
+	echo "Câble réseau détecté, demande d'adresse..."
+	udhcpc -i eth0 -n -q -t 8 -T 2 >> "$LOG" 2>&1
+}
+
+attendre_wlan() {
+	modprobe ath5k 2>/dev/null
+	i=0
+	while [ ! -d /sys/class/net/wlan0 ] && [ $i -lt 15 ]; do sleep 1; i=$((i+1)); done
+	[ -d /sys/class/net/wlan0 ] || return 1
+	rfkill unblock all 2>/dev/null
+	ip link set wlan0 up
+}
+
+# Le réseau habituel, sans rien demander ; quelques essais (le temps que la carte
+# voie la box).
+wifi_defaut() {
+	attendre_wlan || return 1
+	for essai in 1 2 3; do
+		echo "Connexion au Wi-Fi « $WIFI_DEFAUT » (essai $essai)..."
+		connecter_wifi "$WIFI_DEFAUT" "$WIFI_DEFAUT_CLE" && return 0
+		sleep 3
+	done
+	return 1
+}
+
+choisir_wifi() {
+	modprobe ath5k 2>/dev/null
+	i=0
+	while [ ! -d /sys/class/net/wlan0 ] && [ $i -lt 10 ]; do sleep 1; i=$((i+1)); done
+	if [ ! -d /sys/class/net/wlan0 ]; then
+		echo "Aucune carte Wi-Fi trouvée (pilote ath5k)."
+		echo "Branchez un câble réseau puis tapez Entrée pour réessayer."
+		read -r _
+		return 1
+	fi
+	rfkill unblock all 2>/dev/null
+	ip link set wlan0 up
+	while :; do
+		titre
+		echo "Recherche des réseaux Wi-Fi..."
+		echo "(si la liste est vide, vérifiez que le Wi-Fi est allumé : Fn+F2)"
+		echo
+		iw dev wlan0 scan 2>/dev/null | awk '
+			/^BSS / { if (ssid != "") print sig "\t" sec "\t" ssid; ssid=""; sec="ouvert"; sig=0 }
+			/signal:/ { sig=$2 }
+			/SSID: / { sub(/^[ \t]*SSID: /, ""); ssid=$0 }
+			/RSN:|WPA:/ { sec="WPA" }
+			/Privacy/ { if (sec=="ouvert") sec="WEP" }
+			END { if (ssid != "") print sig "\t" sec "\t" ssid }' \
+			| sort -t "$(printf '\t')" -k1,1nr | awk -F '\t' '!vu[$3]++' | head -12 > /tmp/reseaux
+		n=0
+		while IFS="$(printf '\t')" read -r sig sec ssid; do
+			n=$((n+1))
+			printf '  %2d) %-32s %-7s %s dBm\n' "$n" "$ssid" "$sec" "$sig"
+		done < /tmp/reseaux
+		[ $n -eq 0 ] && echo "  (aucun réseau trouvé)"
+		echo
+		echo "Numéro du réseau, R pour relancer la recherche,"
+		printf "ou tapez directement le nom d'un réseau caché : "
+		read -r choix
+		case "$choix" in
+			''|r|R) continue ;;
+		esac
+		if echo "$choix" | grep -qE '^[0-9]+$' && [ "$choix" -ge 1 ] && [ "$choix" -le $n ]; then
+			ligne=$(sed -n "${choix}p" /tmp/reseaux)
+			ssid=$(echo "$ligne" | cut -f3)
+			sec=$(echo "$ligne" | cut -f2)
+		else
+			ssid="$choix"; sec="WPA"
+		fi
+		echo
+		echo "Réseau : $ssid"
+		if [ "$sec" = ouvert ]; then
+			cle=""
+		else
+			printf "Mot de passe du Wi-Fi : "
+			read -r cle
+		fi
+		if connecter_wifi "$ssid" "$cle"; then
+			return 0
+		fi
+		echo
+		echo "La connexion à « $ssid » a échoué (mot de passe ?)."
+		attendre_touche
+	done
+}
+
+connecter_wifi() {
+	ssid="$1"; cle="$2"
+	killall wpa_supplicant udhcpc 2>/dev/null
+	mkdir -p /etc/wpa_supplicant
+	{
+		echo "ctrl_interface=/var/run/wpa_supplicant"
+		echo "country=FR"
+		if [ -z "$cle" ]; then
+			printf 'network={\n\tssid="%s"\n\tkey_mgmt=NONE\n\tscan_ssid=1\n}\n' "$ssid"
+		elif [ ${#cle} -lt 8 ]; then
+			# Trop court pour du WPA : clé WEP.
+			printf 'network={\n\tssid="%s"\n\tkey_mgmt=NONE\n\twep_key0="%s"\n\tscan_ssid=1\n}\n' "$ssid" "$cle"
+		else
+			wpa_passphrase "$ssid" "$cle" | sed 's/^}/\tscan_ssid=1\n}/'
+		fi
+	} > /etc/wpa_supplicant/wpa_supplicant.conf
+	chmod 600 /etc/wpa_supplicant/wpa_supplicant.conf
+	echo "Connexion..."
+	wpa_supplicant -B -i wlan0 -c /etc/wpa_supplicant/wpa_supplicant.conf >> "$LOG" 2>&1
+	i=0
+	while [ $i -lt 30 ]; do
+		wpa_cli -i wlan0 status 2>/dev/null | grep -q 'wpa_state=COMPLETED' && break
+		sleep 1; i=$((i+1))
+	done
+	wpa_cli -i wlan0 status 2>/dev/null | grep -q 'wpa_state=COMPLETED' || return 1
+	echo "Associé, demande d'adresse..."
+	udhcpc -i wlan0 -n -q -t 10 -T 2 >> "$LOG" 2>&1 || return 1
+	# Garder l'adresse : udhcpc en tâche de fond renouvellera le bail.
+	udhcpc -i wlan0 -b -q >> "$LOG" 2>&1
+	return 0
+}
+
+ouvrir_acces() {
+	rc-service sshd start >> "$LOG" 2>&1
+	if ! pidof sshd > /dev/null; then
+		ssh-keygen -A >> "$LOG" 2>&1
+		/usr/sbin/sshd >> "$LOG" 2>&1
+	fi
+	# L'heure (pour les journaux et les certificats).
+	ntpd -q -n -p pool.ntp.org >> "$LOG" 2>&1 &
+}
+
+disque_interne() {
+	# Disque non USB, entre 3 et 9 Go (SSD de 4 Go du 701, ou 8 Go).
+	lsblk -dbno NAME,TRAN,SIZE,TYPE 2>/dev/null | while read -r nom tran taille type; do
+		[ "$type" = disk ] || continue
+		[ "$tran" = usb ] && continue
+		[ "$taille" -ge 3000000000 ] && [ "$taille" -le 9000000000 ] && echo "$nom $taille"
+	done | head -1
+}
+
+installer_arcaos() {
+	titre
+	if ! monter_cle; then
+		echo "Image ArcaOS introuvable sur la clé."
+		attendre_touche; return
+	fi
+	set -- $(disque_interne)
+	disque=$1; taille=$2
+	if [ -z "$disque" ]; then
+		echo "Disque interne introuvable."
+		lsblk -o NAME,TRAN,SIZE,MODEL
+		attendre_touche; return
+	fi
+	modele=$(cat /sys/block/$disque/device/model 2>/dev/null)
+	echo "Disque interne : /dev/$disque  $modele  $((taille / 1000000)) Mo"
+	echo
+	echo "ATTENTION : tout son contenu va être effacé et remplacé par ArcaOS."
+	echo
+	printf "Tapez OUI en majuscules pour continuer : "
+	read -r ok
+	[ "$ok" = OUI ] || { echo "Annulé."; attendre_touche; return; }
+	echo
+	echo "Écriture d'ArcaOS (environ 5 à 10 minutes)..."
+	trace "écriture sur /dev/$disque"
+	if zcat "$IMAGE_DIR/eeepc701-arcaos.img.gz" | dd of=/dev/$disque bs=4M conv=fsync status=progress; then
+		sync
+		echo
+		echo "Vérification..."
+		attendu=$(cut -d' ' -f1 "$IMAGE_DIR/eeepc701-arcaos.img.sha256")
+		octets=$(zcat "$IMAGE_DIR/eeepc701-arcaos.img.gz" | wc -c)
+		obtenu=$(head -c "$octets" /dev/$disque | sha256sum | cut -d' ' -f1)
+		if [ "$attendu" = "$obtenu" ]; then
+			echo "ArcaOS est installé et vérifié."
+			trace "écriture vérifiée"
+		else
+			echo "ERREUR : la vérification a échoué. Recommencez l'installation."
+			trace "vérification ÉCHOUÉE $obtenu"
+		fi
+	else
+		echo "ERREUR pendant l'écriture."
+		trace "dd a échoué"
+	fi
+	attendre_touche
+}
+
+# --- Programme principal -----------------------------------------------------
+trace "démarrage"
+# Clavier français pour la console (mot de passe du Wi-Fi).
+zcat /usr/share/bkeymaps/fr/fr.bmap.gz 2>/dev/null | loadkmap 2>/dev/null \
+	|| zcat /usr/share/bkeymaps/fr/fr-latin9.bmap.gz 2>/dev/null | loadkmap 2>/dev/null
+titre
+wifi_defaut || ethernet || until choisir_wifi; do :; done
+ouvrir_acces
+trace "réseau : $(adresse | tr '\n' ' ')"
+
+while :; do
+	titre
+	echo "Le 701 est connecté. Claude peut s'y connecter à distance :"
+	echo
+	adresse | while read -r ifc ip; do
+		echo "      ssh root@$ip        ($ifc)"
+	done
+	echo
+	echo "  1) Installer ArcaOS sur le disque interne (efface le disque)"
+	echo "  2) Changer de réseau Wi-Fi"
+	echo "  3) Redémarrer (retirer la clé pour démarrer ArcaOS)"
+	echo "  4) Éteindre"
+	echo "  5) Ligne de commande"
+	echo
+	printf "Choix : "
+	read -r choix
+	case "$choix" in
+		1) installer_arcaos ;;
+		2) choisir_wifi ;;
+		3) reboot; sleep 30 ;;
+		4) poweroff; sleep 30 ;;
+		5) clear; echo "Tapez exit pour revenir au menu."; /bin/sh -l ;;
+	esac
+done
