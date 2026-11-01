@@ -69,7 +69,8 @@ struct athos {
 	int tx_suivant, tx_ancien;
 	int tx_ancre;                   /* dernier descripteur de la file (-1 : file arrêtée) */
 	int txq;                        /* file d'émission matérielle des données */
-	int irq_actif;                  /* interruptions autorisées (à rétablir après un changement de canal) */
+	int irq_actif;
+	unsigned long cal_court, cal_complet, cal_ani;  /* échéances du calibrage (os_jiffies) */                  /* interruptions autorisées (à rétablir après un changement de canal) */
 	uint32_t *tx_lien;              /* ds_link du dernier descripteur en file */
 
 	/* Station 802.11 */
@@ -88,6 +89,7 @@ struct athos {
 
 	/* Compteurs */
 	unsigned long rx_trames, rx_erreurs, tx_trames, tx_echecs;
+	unsigned long rx_crc, rx_phy, rx_fifo, rx_autres, irq_rxeol, irq_rxorn;
 };
 
 /* --- athos.c : matériel --------------------------------------------------- */
@@ -103,6 +105,7 @@ int athos_tx_fini(struct athos *a);
 void athos_arreter(struct athos *a);
 void athos_irq_marche(struct athos *a);
 int athos_irq(struct athos *a);
+void athos_calibrer(struct athos *a);
 
 /* --- wlan.c : station 802.11 ---------------------------------------------- */
 void wlan_recevoir(struct athos *a, const uint8_t *f, int len, int signal);

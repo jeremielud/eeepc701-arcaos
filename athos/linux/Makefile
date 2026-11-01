@@ -1,6 +1,6 @@
 # Essais du cœur athos sous Linux (sur le 701, démarré sur la clé).
 CFLAGS = -std=gnu11 -O2 -Wall -Wno-unused-function -I../core -I../compat -I.. 
-CORE = attach caps desc dma eeprom gpio initvals pcu phy qcu reset glue athos wlan
+CORE = attach caps desc dma eeprom gpio initvals pcu phy qcu reset ani glue athos wlan
 OBJS = $(CORE:%=%.o) osdep_linux.o
 VPATH = ../core
 

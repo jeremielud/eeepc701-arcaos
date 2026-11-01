@@ -7,6 +7,7 @@
 #include "ath5k.h"
 #include "reg.h"
 #include "athos.h"
+#include "ani.h"
 
 extern const struct ath_bus_ops athos_pci_bus_ops;
 void athos_radio_on(struct ath5k_hw *ah);
@@ -140,6 +141,11 @@ int athos_canal(struct athos *a, int canal)
 	}
 	athos_radio_on(ah);
 	a->canal = canal;
+	/* Immunité au bruit automatique et échéances du calibrage (ath5k_reset). */
+	ath5k_ani_init(ah, ATH5K_ANI_MODE_AUTO);
+	a->cal_court = os_jiffies() + ATH5K_TUNE_CALIBRATION_INTERVAL_SHORT;
+	a->cal_complet = os_jiffies() + ATH5K_TUNE_CALIBRATION_INTERVAL_FULL;
+	a->cal_ani = os_jiffies() + ATH5K_TUNE_CALIBRATION_INTERVAL_ANI;
 
 	/* Anneau de réception : chaque descripteur pointe sur le suivant, le dernier
 	 * sur lui-même (ath5k_rxbuf_setup). */
@@ -191,6 +197,14 @@ int athos_rx(struct athos *a)
 			wlan_recevoir(a, t->data, rs.rs_datalen - FCS_LEN, rs.rs_rssi - 95);
 		} else {
 			a->rx_erreurs++;
+			if (rs.rs_status & AR5K_RXERR_CRC)
+				a->rx_crc++;
+			else if (rs.rs_status & AR5K_RXERR_PHY)
+				a->rx_phy++;
+			else if (rs.rs_status & AR5K_RXERR_FIFO)
+				a->rx_fifo++;
+			else
+				a->rx_autres++;
 		}
 		/* Le descripteur rendu devient la nouvelle queue de la chaîne : auto-lié, et
 		 * l'ancienne queue pointe sur lui (ath5k_rxbuf_setup). */
@@ -299,5 +313,39 @@ int athos_irq(struct athos *a)
 	if (!a->ah || !ath5k_hw_is_intr_pending(a->ah))
 		return 0;
 	ath5k_hw_get_isr(a->ah, &etat);         /* lit et efface l'état */
+	if (etat & AR5K_INT_RXEOL)
+		a->irq_rxeol++;
+	if (etat & AR5K_INT_RXORN)
+		a->irq_rxorn++;
 	return 1;
+}
+
+/* --- Calibrage périodique (ath5k_calibrate_work, ath5k_tasklet_ani) --------- */
+void athos_calibrer(struct athos *a)
+{
+	struct ath5k_hw *ah = a->ah;
+	unsigned long t = os_jiffies();
+
+	if (!ah->curchan)
+		return;
+	if (t >= a->cal_ani) {
+		a->cal_ani = t + ATH5K_TUNE_CALIBRATION_INTERVAL_ANI;
+		ah->ah_cal_mask |= AR5K_CALIBRATION_ANI;
+		ath5k_ani_calibration(ah);
+		ah->ah_cal_mask &= ~AR5K_CALIBRATION_ANI;
+	}
+	if (t < a->cal_court && t < a->cal_complet)
+		return;
+	if (t >= a->cal_complet) {
+		a->cal_complet = t + ATH5K_TUNE_CALIBRATION_INTERVAL_FULL;
+		ah->ah_cal_mask |= AR5K_CALIBRATION_FULL;
+		if (ath5k_hw_gainf_calibrate(ah) == AR5K_RFGAIN_NEED_CHANGE)
+			os_log("athos : gain radio à revoir (canal %d)\n", a->canal);
+	} else {
+		ah->ah_cal_mask |= AR5K_CALIBRATION_SHORT;
+	}
+	a->cal_court = t + ATH5K_TUNE_CALIBRATION_INTERVAL_SHORT;
+	if (ath5k_hw_phy_calibrate(ah, ah->curchan))
+		os_log("athos : calibrage du canal %d en échec\n", a->canal);
+	ah->ah_cal_mask &= ~(AR5K_CALIBRATION_FULL | AR5K_CALIBRATION_SHORT);
 }

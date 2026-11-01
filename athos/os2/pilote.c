@@ -374,9 +374,15 @@ static void StrategyIoctl(REQPACKET *prp)
 			e[9] = nb_pleines;
 			e[10] = nb_tx_pile;
 			e[11] = nb_tx_refus;
-			if (taille >= sizeof(ULONG) * 14) {
+			if (taille >= sizeof(ULONG) * 20) {
 				e[12] = nb_irq;
 				e[13] = nb_tic;
+				e[14] = carte.rx_crc;
+				e[15] = carte.rx_phy;
+				e[16] = carte.rx_fifo;
+				e[17] = carte.rx_autres;
+				e[18] = carte.irq_rxeol;
+				e[19] = carte.irq_rxorn;
 			}
 			e[0] = carte.etat;
 			e[1] = carte.canal;

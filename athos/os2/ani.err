@@ -1,0 +1,2 @@
+obj/ani.c(428): Warning! W136: Comparison equivalent to 'unsigned == 0'
+obj/ani.c(428): Warning! W136: Comparison equivalent to 'unsigned == 0'

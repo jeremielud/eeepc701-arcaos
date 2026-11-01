@@ -238,6 +238,8 @@ void athos_poll(struct athos *a)
 {
 	athos_rx(a);
 	athos_tx_fini(a);
+	if (a->etat == ATHOS_ASSOCIE)
+		athos_calibrer(a);
 	if ((a->etat == ATHOS_AUTHENTIFICATION || a->etat == ATHOS_ASSOCIATION) && os_jiffies() >= a->echeance) {
 		if (++a->essais > ESSAIS) {
 			os_log("athos : pas de réponse du point d'accès\n");

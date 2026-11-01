@@ -14,9 +14,9 @@ export INCLUDE="$KIT:$WATCOM/h:$DDK/base/h:$DDK/base32/h:$DDK/base/inc"
 O=obj
 mkdir -p $O
 # Options du kit pour un pilote 32 bits (Required/makefile, C32DRVFLAGS), en C99.
-DRV="-q -bt=os2 -6s -obilmr -s -ze -zl -zq -zfp -zgp -ms -zp4 -za99 -DATHOS_NRX=16 -DATHOS_NTX=8"
+DRV="-q -bt=os2 -6s -obilmr -s -ze -zl -zq -zfp -zgp -ms -zp4 -za99 -DATHOS_NRX=32 -DATHOS_NTX=8"
 # Sources en UTF-8, compilées en page de code 850 (celle de la console OS/2).
-for f in attach caps desc dma eeprom gpio initvals pcu phy qcu reset glue athos wlan; do
+for f in attach caps desc dma eeprom gpio initvals pcu phy qcu reset ani glue athos wlan; do
 	iconv -f utf-8 -t cp850//TRANSLIT ../core/$f.c > $O/$f.c
 	wcc386 $DRV -I../core -I../compat -I.. -fo=$O/$f.obj $O/$f.c
 done
@@ -45,7 +45,7 @@ file $O/header.obj
 file $O/pilote.obj
 file $O/osdep_os2.obj
 FIN
-for f in attach caps desc dma eeprom gpio initvals pcu phy qcu reset glue athos wlan; do
+for f in attach caps desc dma eeprom gpio initvals pcu phy qcu reset ani glue athos wlan; do
 	echo "file $O/$f.obj" >> $O/athos.lrf
 done
 cat >> $O/athos.lrf <<FIN

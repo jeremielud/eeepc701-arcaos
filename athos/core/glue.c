@@ -33,11 +33,35 @@ void _ath5k_printk(const struct ath5k_hw *ah, const char *level, const char *fmt
 	os_log("%s%s", level, line);
 }
 
-/* Station seulement : pas d'ANI (immunité au bruit) pour l'instant. */
-void ath5k_ani_phy_error_report(struct ath5k_hw *ah, enum ath5k_phy_error_code phyerr)
+/* Compteurs de cycles de la radio, pour l'ANI (ath/hw.c). */
+void ath_hw_cycle_counters_update(struct ath_common *common)
 {
-	(void)ah;
-	(void)phyerr;
+	struct ath5k_hw *ah = common->ah;
+	u32 cycles, busy, rx, tx;
+
+	ath5k_hw_reg_write(ah, 0x00000002, 0x0040);     /* AR_MIBC_FMC : figer */
+	cycles = ath5k_hw_reg_read(ah, 0x80f8);         /* AR_CCCNT */
+	busy = ath5k_hw_reg_read(ah, 0x80f4);           /* AR_RCCNT */
+	rx = ath5k_hw_reg_read(ah, 0x80f0);             /* AR_RFCNT */
+	tx = ath5k_hw_reg_read(ah, 0x80ec);             /* AR_TFCNT */
+	ath5k_hw_reg_write(ah, 0, 0x80f8);
+	ath5k_hw_reg_write(ah, 0, 0x80f0);
+	ath5k_hw_reg_write(ah, 0, 0x80f4);
+	ath5k_hw_reg_write(ah, 0, 0x80ec);
+	ath5k_hw_reg_write(ah, 0, 0x0040);              /* libérer */
+	common->cc_ani.cycles += cycles;
+	common->cc_ani.rx_busy += busy;
+	common->cc_ani.rx_frame += rx;
+	common->cc_ani.tx_frame += tx;
+}
+
+int32_t ath_hw_get_listen_time(struct ath_common *common)
+{
+	struct ath_cycle_counters *cc = &common->cc_ani;
+	int32_t listen_time = (cc->cycles - cc->rx_frame - cc->tx_frame) / (common->clockrate * 1000);
+
+	memset(cc, 0, sizeof(*cc));
+	return listen_time;
 }
 
 void ath_hw_setbssidmask(struct ath_common *common)

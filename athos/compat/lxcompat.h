@@ -315,6 +315,7 @@ static inline __le16 ieee80211_generic_frame_duration(struct ieee80211_hw *hw, s
 static inline int net_ratelimit(void) { return 1; }
 static inline s32 sign_extend32(u32 v, int idx) { u8 sh = 31 - idx; return (s32)(v << sh) >> sh; }
 static inline unsigned long roundup_pow_of_two(unsigned long n) { unsigned long r = 1; while (r < n) r <<= 1; return r; }
+#define tasklet_schedule(t) ((void)(t))      /* l'ANI est appelée chaque seconde de toute façon */
 #define local_irq_save(f) ((f) = 0)
 #define local_irq_restore(f) ((void)(f))
 
