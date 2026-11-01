@@ -24,6 +24,7 @@ typedef u16 __le16; typedef u32 __le32; typedef u64 __le64;
 typedef u16 __be16; typedef u32 __be32;
 typedef u32 dma_addr_t;
 typedef unsigned int gfp_t;
+typedef unsigned int u_int;
 
 /* --- Compilateur ------------------------------------------------------------ */
 #define __iomem
@@ -103,11 +104,10 @@ static inline int hweight32(u32 v) { return __builtin_popcount(v); }
 static inline int hweight8(u8 v) { return __builtin_popcount(v); }
 static inline int ilog2(u32 v) { return 31 - __builtin_clz(v); }
 static inline int fls(u32 v) { return v ? 32 - __builtin_clz(v) : 0; }
-static inline int ffs(u32 v) { return __builtin_ffs(v); }
 static inline unsigned long __ffs(unsigned long v) { return __builtin_ctzl(v); }
 static inline bool is_power_of_2(unsigned long n) { return n && !(n & (n - 1)); }
 static inline u32 rol32(u32 w, unsigned s) { return (w << s) | (w >> (32 - s)); }
-static inline u32 bitrev32(u32 x) { return __builtin_bitreverse32(x); }
+static inline u32 bitrev32(u32 x) { u32 r = 0; for (int i = 0; i < 32; i++) { r = (r << 1) | (x & 1); x >>= 1; } return r; }
 
 /* --- Mémoire ---------------------------------------------------------------- */
 #define GFP_KERNEL 0
@@ -117,6 +117,8 @@ static inline void *kmalloc(size_t n, gfp_t f) { (void)f; return malloc(n); }
 static inline void *kcalloc(size_t c, size_t n, gfp_t f) { (void)f; return calloc(c, n); }
 static inline void kfree(const void *p) { free((void *)p); }
 #define kmemdup(p, n, f) memcpy(kmalloc(n, f), p, n)
+#define kmalloc_array(c, n, f) kcalloc(c, n, f)
+#define kzalloc_objs(T, n) ((T *)kcalloc((n), sizeof(T), 0))
 
 /* --- Journal ---------------------------------------------------------------- */
 #define KERN_ERR "erreur : "
@@ -172,15 +174,29 @@ typedef struct { int counter; } atomic_t;
 #define mutex_unlock(m) ((void)(m))
 #define mutex_init(m) ((void)(m))
 #define lockdep_assert_held(m) ((void)(m))
+#define DECLARE_EWMA(name, a, b) DEFINE_EWMA(name, a, b)
 #define DEFINE_EWMA(name, a, b) struct ewma_##name { unsigned long internal; }; \
 	static inline void ewma_##name##_init(struct ewma_##name *e) { e->internal = 0; } \
 	static inline void ewma_##name##_add(struct ewma_##name *e, unsigned long v) { e->internal = e->internal ? (e->internal * 7 + v * 1024) / 8 : v * 1024; } \
 	static inline unsigned long ewma_##name##_read(struct ewma_##name *e) { return e->internal / 1024; }
 
+/* --- Divers périphériques --------------------------------------------------- */
+struct led_classdev { int x; };
+#ifdef ATHOS_TRACE
+u32 os_mmio_read(volatile void *addr);
+void os_mmio_write(u32 val, volatile void *addr);
+#define ioread32(addr) os_mmio_read(addr)
+#define iowrite32(val, addr) os_mmio_write((val), (addr))
+#else
+#define ioread32(addr) (*(volatile u32 *)(addr))
+#define iowrite32(val, addr) (*(volatile u32 *)(addr) = (val))
+#endif
+
 /* --- PCI -------------------------------------------------------------------- */
 struct device { int x; };
 struct pci_dev { struct device dev; u16 vendor, device, subsystem_vendor, subsystem_device; u8 revision; };
-struct platform_device { struct device dev; };
+struct platform_device { struct device dev; int id; };
+#define to_platform_device(d) ((struct platform_device *)(d))
 #define dev_name(d) "ath5k"
 #define pci_is_pcie(p) 1
 #define dev_err(d, ...) os_log("erreur : " __VA_ARGS__)
@@ -233,9 +249,33 @@ static inline void ether_addr_copy(u8 *d, const u8 *s) { memcpy(d, s, ETH_ALEN);
 static inline void eth_zero_addr(u8 *a) { memset(a, 0, ETH_ALEN); }
 #define ieee80211_hw_check(hw, f) 0
 
+#define IEEE80211_MAX_FRAME_LEN 2352
+#define IEEE80211_RATE_SUPPORTS_5MHZ  (1 << 5)
+#define IEEE80211_RATE_SUPPORTS_10MHZ (1 << 6)
+struct survey_info { struct ieee80211_channel *channel; u64 time, time_busy, time_rx, time_tx; s8 noise; u32 filled; };
+static inline void eth_broadcast_addr(u8 *a) { memset(a, 0xff, ETH_ALEN); }
+/* Durée d'une trame (802.11b ou g), comme ieee80211_generic_frame_duration. */
+static inline __le16 ieee80211_generic_frame_duration(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+	enum nl80211_band band, size_t len, struct ieee80211_rate *rate)
+{
+	int r = rate->bitrate, dur;
+	(void)hw; (void)vif;
+	if (band == NL80211_BAND_5GHZ || (r != 10 && r != 20 && r != 55 && r != 110)) {
+		dur = 16 + 16 + 4 + 4 * DIV_ROUND_UP((16 + 8 * ((int)len + 4) + 6) * 10, 4 * r);
+	} else {
+		dur = 10 + 144 + 48 + DIV_ROUND_UP(8 * ((int)len + 4) * 10, r);
+	}
+	return cpu_to_le16(dur);
+}
+
 /* --- Divers ----------------------------------------------------------------- */
 #define sort(base, num, size, cmp, swp) qsort(base, num, size, cmp)
 #define IS_ENABLED(x) 0
 #define ENOTSUPP 524
+static inline int net_ratelimit(void) { return 1; }
+static inline s32 sign_extend32(u32 v, int idx) { u8 sh = 31 - idx; return (s32)(v << sh) >> sh; }
+static inline unsigned long roundup_pow_of_two(unsigned long n) { unsigned long r = 1; while (r < n) r <<= 1; return r; }
+#define local_irq_save(f) ((f) = 0)
+#define local_irq_restore(f) ((void)(f))
 
 #endif
