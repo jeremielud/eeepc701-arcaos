@@ -19,7 +19,7 @@ static unsigned char tampon[16384 + 4];
 int main(void)
 {
 	HFILE h;
-	ULONG action, taille, etat[20];
+	ULONG action, taille, etat[35];
 	APIRET rc;
 
 	rc = DosOpen("ATHOS$", &h, &action, 0, 0, OPEN_ACTION_OPEN_IF_EXISTS,
@@ -38,6 +38,14 @@ int main(void)
 	if (taille >= sizeof(etat))
 		printf("interruptions %lu, tops de minuterie %lu\nerreurs : CRC %lu, PHY %lu, FIFO %lu, autres %lu ; plus de descripteurs %lu, débordements %lu\n",
 		       etat[12], etat[13], etat[14], etat[15], etat[16], etat[17], etat[18], etat[19]);
+	if (taille >= sizeof(etat)) {
+		static const char *debits[12] = { "1", "2", "5,5", "11", "6", "9", "12", "18", "24", "36", "48", "54" };
+		int k;
+		printf("données pour nous %lu, réémises %lu, doublons %lu\ndébits (Mbit/s) :", etat[20], etat[21], etat[22]);
+		for (k = 0; k < 12; k++)
+			printf(" %s=%lu", debits[k], etat[23 + k]);
+		printf("\n");
+	}
 	taille = sizeof(tampon);
 	rc = DosDevIOCtl(h, IOCTL_CATEGORIE, IOCTL_JOURNAL, 0, 0, 0, tampon, sizeof(tampon), &taille);
 	if (rc) {

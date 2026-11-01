@@ -384,6 +384,13 @@ static void StrategyIoctl(REQPACKET *prp)
 				e[18] = carte.irq_rxeol;
 				e[19] = carte.irq_rxorn;
 			}
+			if (taille >= sizeof(ULONG) * 35) {
+				e[20] = carte.rx_donnees;
+				e[21] = carte.rx_reemises;
+				e[22] = carte.rx_doublons;
+				for (int k = 0; k < 12; k++)
+					e[23 + k] = carte.rx_debit[k];
+			}
 			e[0] = carte.etat;
 			e[1] = carte.canal;
 			e[2] = carte.rx_trames;

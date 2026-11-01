@@ -38,6 +38,15 @@ pièges connus. Le tenir à jour à chaque étape.
 5. **Banc d'essai automatique** : le PC pilote des allers-retours Linux ⇄ ArcaOS sans
    intervention (voir « Travailler »).
 
+## ⏸ Projet en pause (2026-11-01)
+
+L'utilisateur a mis ArcaOS en pause pour installer ReactOS à la place sur le 701 (voir
+le projet ReactOS). État au moment de la pause : pilote athos fonctionnel dans ArcaOS
+(DHCP, ping, HTTP ~1 Mo/s par moments), lien instable sur la durée (téléchargements qui
+calent), essai d'endurance (`endurance.cmd`) lancé, sshd non installé (dépôts yum
+injoignables : Arca Noae en panne, Netlabs qui cale). L'image ArcaOS reste dans
+`eeepc701-arcaos.img` ; le SSD du 701 sera écrasé par ReactOS.
+
 ## État actuel et prochaines étapes
 
 - Débit faible : ~10 Ko/s en HTTP (4,8 avant calibrage + ANI). La radio rate des trames

@@ -90,6 +90,11 @@ struct athos {
 	/* Compteurs */
 	unsigned long rx_trames, rx_erreurs, tx_trames, tx_echecs;
 	unsigned long rx_crc, rx_phy, rx_fifo, rx_autres, irq_rxeol, irq_rxorn;
+	/* Trames de données reçues pour nous : total, avec le drapeau de réémission,
+	 * doublons (même numéro de séquence), et répartition par débit radio. */
+	unsigned long rx_donnees, rx_reemises, rx_doublons, rx_debit[12];
+	uint16_t rx_der_seq;
+	int rx_debit_courant;
 };
 
 /* --- athos.c : matériel --------------------------------------------------- */

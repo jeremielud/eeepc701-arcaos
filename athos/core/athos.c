@@ -194,6 +194,7 @@ int athos_rx(struct athos *a)
 			break;
 		if (!ret && !rs.rs_status && rs.rs_datalen >= 10 + FCS_LEN) {
 			a->rx_trames++;
+			a->rx_debit_courant = rs.rs_rate;
 			wlan_recevoir(a, t->data, rs.rs_datalen - FCS_LEN, rs.rs_rssi - 95);
 		} else {
 			a->rx_erreurs++;

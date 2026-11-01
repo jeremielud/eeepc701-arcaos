@@ -228,6 +228,19 @@ void wlan_recevoir(struct athos *a, const uint8_t *f, int len, int signal)
 		break;
 	case FC_DATA:
 	case FC_QOS_DATA:
+		if (pour_moi && a->etat == ATHOS_ASSOCIE) {
+			static const uint8_t codes[12] = { 0x1b, 0x1a, 0x19, 0x18, 0x0b, 0x0f, 0x0a, 0x0e, 0x09, 0x0d, 0x08, 0x0c };
+			uint16_t seq = (f[22] | f[23] << 8) >> 4;
+			a->rx_donnees++;
+			if (f[1] & 0x08)
+				a->rx_reemises++;
+			if (seq == a->rx_der_seq)
+				a->rx_doublons++;
+			a->rx_der_seq = seq;
+			for (int k = 0; k < 12; k++)
+				if ((a->rx_debit_courant & 0x1b) == codes[k] || a->rx_debit_courant == codes[k])
+					a->rx_debit[k]++;
+		}
 		if (a->etat == ATHOS_ASSOCIE && (pour_moi || (f[4] & 1)))
 			donnees(a, f, len);
 		break;
