@@ -15,11 +15,18 @@ O=obj
 mkdir -p $O
 # Options du kit pour un pilote 32 bits (Required/makefile, C32DRVFLAGS), en C99.
 DRV="-q -bt=os2 -6s -obilmr -s -ze -zl -zq -zfp -zgp -ms -zp4 -za99 -DATHOS_NRX=16 -DATHOS_NTX=8"
+# Sources en UTF-8, compilées en page de code 850 (celle de la console OS/2).
 for f in attach caps desc dma eeprom gpio initvals pcu phy qcu reset glue athos wlan; do
-	wcc386 $DRV -I../core -I../compat -I.. -fo=$O/$f.obj ../core/$f.c
+	iconv -f utf-8 -t cp850//TRANSLIT ../core/$f.c > $O/$f.c
+	wcc386 $DRV -I../core -I../compat -I.. -fo=$O/$f.obj $O/$f.c
 done
-wcc386 $DRV -I../core -I../compat -fo=$O/osdep_os2.obj osdep_os2.c
-wcc386 $DRV -I../core -I../compat -fo=$O/pilote.obj pilote.c
+for f in osdep_os2 pilote; do
+	iconv -f utf-8 -t cp850//TRANSLIT $f.c > $O/$f.c
+	wcc386 $DRV -I. -I../core -I../compat -fo=$O/$f.obj $O/$f.c
+done
+# Utilitaire de lecture du journal (programme OS/2 ordinaire).
+iconv -f utf-8 -t cp850//TRANSLIT athoslog.c > $O/athoslog.c
+INCLUDE="$WATCOM/h:$WATCOM/h/os2" wcl386 -q -bt=os2 -l=os2v2 -fe=athoslog.exe -fo=$O/athoslog.obj $O/athoslog.c
 # Le module d'en-tête du pilote, extrait de la bibliothèque du kit.
 T=$(mktemp -d)
 ( cd $T && wlib -q -x "$KIT/Drv32.lib" )

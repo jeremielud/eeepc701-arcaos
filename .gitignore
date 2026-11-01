@@ -40,3 +40,4 @@ athos/traces/*.txt
 athos/linux/connecter
 athos/os2/obj/
 athos/os2/*.os2
+athos/os2/athoslog.exe

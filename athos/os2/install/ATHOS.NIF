@@ -1,0 +1,18 @@
+[ATHOS]
+ Type       = NDIS
+ Title      = "athos : Atheros AR2425 Wi-Fi (Eee PC 701), essai"
+ Version    = 0.1
+ DriverName = ATHOS$
+ XPORTS     = NETBEUI, LANDD
+
+[File]
+ Name     = ATHOS.OS2
+ Path     = \IBMCOM\MACS
+
+[SSID]
+ display  = "Nom du reseau Wi-Fi (SSID)"
+ type     = string
+ strlength = 32
+ optional = no
+ editable = yes
+ help     = "Nom du reseau Wi-Fi a rejoindre (reseau ouvert pour l'instant)."

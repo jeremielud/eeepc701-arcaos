@@ -127,7 +127,12 @@ int __syscall NdisDriverStartXmit(struct TxBufDesc *pDsc, ULONG ProtID_ReqHandle
 	}
 	if (len < ETH_HLEN)
 		return INVALID_PARAMETER;
-	if (wlan_envoyer(&carte, trame_tx, len)) {
+	/* La file d'émission est aussi touchée par la scrutation (interruption) : on
+	 * masque les interruptions le temps de la mise en file. */
+	_disable();
+	i = wlan_envoyer(&carte, trame_tx, len);
+	_enable();
+	if (i) {
 		AdapterSS.MssSFHW++;
 		return OUT_OF_RESOURCE;
 	}
