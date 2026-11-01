@@ -43,7 +43,10 @@ pièges connus. Le tenir à jour à chaque étape.
 L'utilisateur a mis ArcaOS en pause pour installer ReactOS à la place sur le 701 (voir
 le projet ReactOS). État au moment de la pause : pilote athos fonctionnel dans ArcaOS
 (DHCP, ping, HTTP ~1 Mo/s par moments), lien instable sur la durée (téléchargements qui
-calent), essai d'endurance (`endurance.cmd`) lancé, sshd non installé (dépôts yum
+calent). **Essai d'endurance : après un gros téléchargement réussi (~1 Mo/s), la
+réception se fige définitivement** (compteur reçues bloqué, émission qui continue) :
+blocage de l'anneau de réception sous forte charge, à corriger en premier à la reprise
+(comparer avec ath5k_tasklet_rx et la gestion de RXEOL/RXDP). sshd non installé (dépôts yum
 injoignables : Arca Noae en panne, Netlabs qui cale). L'image ArcaOS reste dans
 `eeepc701-arcaos.img` ; le SSD du 701 sera écrasé par ReactOS.
 
