@@ -1656,7 +1656,7 @@ static inline void __iomem *ath5k_ahb_reg(struct ath5k_hw *ah, u16 reg)
 	    (ah->ah_mac_srev >= AR5K_SREV_AR2315_R6)))
 		return AR5K_AR2315_PCI_BASE + reg;
 
-	return ah->iobase + reg;
+	return (u8 *)ah->iobase + reg;
 }
 
 static inline u32 ath5k_hw_reg_read(struct ath5k_hw *ah, u16 reg)
@@ -1673,12 +1673,12 @@ static inline void ath5k_hw_reg_write(struct ath5k_hw *ah, u32 val, u16 reg)
 
 static inline u32 ath5k_hw_reg_read(struct ath5k_hw *ah, u16 reg)
 {
-	return ioread32(ah->iobase + reg);
+	return ioread32((u8 *)ah->iobase + reg);
 }
 
 static inline void ath5k_hw_reg_write(struct ath5k_hw *ah, u32 val, u16 reg)
 {
-	iowrite32(val, ah->iobase + reg);
+	iowrite32(val, (u8 *)ah->iobase + reg);
 }
 
 #endif

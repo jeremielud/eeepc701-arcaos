@@ -61,4 +61,5 @@ Avancement :
 - [x] Réception : la puce reçoit les balises ; recherche des réseaux sur les 13 canaux
 - [x] Émission, authentification, association (réseau ouvert) et données : le 701 obtient une offre DHCP de la box
 - [ ] WPA2
-- [ ] Enveloppe NDIS 2.0 pour OS/2, utilitaire graphique, accès SSH dans ArcaOS
+- [x] Cœur compilable par OpenWatcom ; pilote NDIS athos.os2 (kit Drv32) compilé, pas encore essayé dans ArcaOS
+- [ ] Essai dans ArcaOS, utilitaire graphique de choix du réseau, accès SSH dans ArcaOS

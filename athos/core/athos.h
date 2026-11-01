@@ -13,8 +13,12 @@
 
 #include <stdint.h>
 
+#ifndef ATHOS_NRX
 #define ATHOS_NRX 32
+#endif
+#ifndef ATHOS_NTX
 #define ATHOS_NTX 16
+#endif
 #define ATHOS_MAX_RESEAUX 32
 
 struct ath5k_hw;
@@ -94,6 +98,8 @@ int athos_tx(struct athos *a, const uint8_t *trame, int longueur, int debit);
 /* Récupère les comptes rendus d'émission ; rend le nombre de trames terminées. */
 int athos_tx_fini(struct athos *a);
 void athos_arreter(struct athos *a);
+void athos_irq_marche(struct athos *a);
+int athos_irq(struct athos *a);
 
 /* --- wlan.c : station 802.11 ---------------------------------------------- */
 void wlan_recevoir(struct athos *a, const uint8_t *f, int len, int signal);

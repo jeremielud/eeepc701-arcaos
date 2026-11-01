@@ -49,23 +49,35 @@ typedef unsigned int u_int;
 #define __printf(a, b) __attribute__((format(printf, a, b)))
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
+#ifdef __WATCOMC__
+#define fallthrough
+#else
 #define fallthrough __attribute__((fallthrough))
+#endif
+#ifdef __WATCOMC__
+#define READ_ONCE(x) (x)
+#define WRITE_ONCE(x, v) ((x) = (v))
+#define __builtin_expect(x, v) (x)
+#else
 #define READ_ONCE(x) (*(volatile __typeof__(x) *)&(x))
 #define WRITE_ONCE(x, v) (*(volatile __typeof__(x) *)&(x) = (v))
+#endif
 #define BUILD_BUG_ON(c) ((void)sizeof(char[1 - 2 * !!(c)]))
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 #define BIT(n) (1UL << (n))
 #define BIT_ULL(n) (1ULL << (n))
 #define GENMASK(h, l) (((~0UL) << (l)) & (~0UL >> (31 - (h))))
+#undef min
+#undef max
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min_t(t, a, b) ((t)(a) < (t)(b) ? (t)(a) : (t)(b))
 #define max_t(t, a, b) ((t)(a) > (t)(b) ? (t)(a) : (t)(b))
 #define clamp(v, lo, hi) min(max(v, lo), hi)
 #define clamp_t(t, v, lo, hi) min_t(t, max_t(t, v, lo), hi)
-#define clamp_val(v, lo, hi) clamp_t(__typeof__(v), v, lo, hi)
+#define clamp_val(v, lo, hi) clamp(v, lo, hi)
 #define abs(x) ((x) < 0 ? -(x) : (x))
-#define swap(a, b) do { __typeof__(a) _t = (a); (a) = (b); (b) = _t; } while (0)
+#define swap(a, b) do { unsigned long _t = (unsigned long)(a); (a) = (b); (b) = _t; } while (0)
 #define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
 #define DIV_ROUND_CLOSEST(x, d) (((x) + ((d) / 2)) / (d))
 #define roundup(x, y) ((((x) + ((y) - 1)) / (y)) * (y))
@@ -88,10 +100,12 @@ typedef unsigned int u_int;
 #define le16_to_cpu(x) ((u16)(x))
 #define le32_to_cpu(x) ((u32)(x))
 #define le16_to_cpus(p) ((void)0)
-#define cpu_to_be16(x) ((u16)__builtin_bswap16(x))
-#define be16_to_cpu(x) ((u16)__builtin_bswap16(x))
-#define cpu_to_be32(x) ((u32)__builtin_bswap32(x))
-#define be32_to_cpu(x) ((u32)__builtin_bswap32(x))
+static inline u16 lx_bswap16(u16 x) { return (u16)((x << 8) | (x >> 8)); }
+static inline u32 lx_bswap32(u32 x) { return (x << 24) | ((x & 0xff00) << 8) | ((x >> 8) & 0xff00) | (x >> 24); }
+#define cpu_to_be16(x) lx_bswap16(x)
+#define be16_to_cpu(x) lx_bswap16(x)
+#define cpu_to_be32(x) lx_bswap32(x)
+#define be32_to_cpu(x) lx_bswap32(x)
 static inline u16 get_unaligned_le16(const void *p) { u16 v; memcpy(&v, p, 2); return v; }
 static inline u32 get_unaligned_le32(const void *p) { u32 v; memcpy(&v, p, 4); return v; }
 static inline void put_unaligned_le16(u16 v, void *p) { memcpy(p, &v, 2); }
@@ -108,11 +122,11 @@ static inline void __clear_bit(int n, unsigned long *a) { clear_bit(n, a); }
 static inline int test_bit(int n, const unsigned long *a) { return (a[n / BITS_PER_LONG] >> (n % BITS_PER_LONG)) & 1; }
 static inline int test_and_set_bit(int n, unsigned long *a) { int o = test_bit(n, a); set_bit(n, a); return o; }
 static inline int test_and_clear_bit(int n, unsigned long *a) { int o = test_bit(n, a); clear_bit(n, a); return o; }
-static inline int hweight32(u32 v) { return __builtin_popcount(v); }
-static inline int hweight8(u8 v) { return __builtin_popcount(v); }
-static inline int ilog2(u32 v) { return 31 - __builtin_clz(v); }
-static inline int fls(u32 v) { return v ? 32 - __builtin_clz(v) : 0; }
-static inline unsigned long __ffs(unsigned long v) { return __builtin_ctzl(v); }
+static inline int hweight32(u32 v) { int n = 0; while (v) { n += v & 1; v >>= 1; } return n; }
+static inline int hweight8(u8 v) { return hweight32(v); }
+static inline int fls(u32 v) { int n = 0; while (v) { n++; v >>= 1; } return n; }
+static inline int ilog2(u32 v) { return fls(v) - 1; }
+static inline unsigned long __ffs(unsigned long v) { unsigned long n = 0; while (!(v & 1)) { n++; v >>= 1; } return n; }
 static inline bool is_power_of_2(unsigned long n) { return n && !(n & (n - 1)); }
 static inline u32 rol32(u32 w, unsigned s) { return (w << s) | (w >> (32 - s)); }
 static inline u32 bitrev32(u32 x) { u32 r = 0; for (int i = 0; i < 32; i++) { r = (r << 1) | (x & 1); x >>= 1; } return r; }
@@ -141,9 +155,10 @@ static inline void kfree(const void *p) { free((void *)p); }
 #define pr_debug(...) ((void)0)
 #define pr_notice(...) os_log(__VA_ARGS__)
 #define pr_cont(...) os_log(__VA_ARGS__)
-#define WARN_ON(c) ({ int _c = !!(c); if (_c) os_log("WARN_ON %s:%d\n", __FILE__, __LINE__); _c; })
+static inline int lx_warn_on(int c, const char *f, int l) { if (c) os_log("WARN_ON %s:%d\n", f, l); return c; }
+#define WARN_ON(c) lx_warn_on(!!(c), __FILE__, __LINE__)
 #define WARN_ON_ONCE(c) WARN_ON(c)
-#define WARN(c, ...) ({ int _c = !!(c); if (_c) os_log(__VA_ARGS__); _c; })
+#define WARN(c, ...) lx_warn_on(!!(c), __FILE__, __LINE__)
 #define BUG_ON(c) do { if (c) os_fatal(__FILE__, __LINE__); } while (0)
 #define BUG() os_fatal(__FILE__, __LINE__)
 
@@ -281,6 +296,22 @@ static inline __le16 ieee80211_generic_frame_duration(struct ieee80211_hw *hw, s
 #define sort(base, num, size, cmp, swp) qsort(base, num, size, cmp)
 #define IS_ENABLED(x) 0
 #define ENOTSUPP 524
+/* Codes d'erreur de Linux absents de certaines bibliothèques C (OpenWatcom). */
+#ifndef EINPROGRESS
+#define EINPROGRESS 115
+#endif
+#ifndef ETIMEDOUT
+#define ETIMEDOUT 110
+#endif
+#ifndef ENOTCONN
+#define ENOTCONN 107
+#endif
+#ifndef EOPNOTSUPP
+#define EOPNOTSUPP 95
+#endif
+#ifndef ECANCELED
+#define ECANCELED 125
+#endif
 static inline int net_ratelimit(void) { return 1; }
 static inline s32 sign_extend32(u32 v, int idx) { u8 sh = 31 - idx; return (s32)(v << sh) >> sh; }
 static inline unsigned long roundup_pow_of_two(unsigned long n) { unsigned long r = 1; while (r < n) r <<= 1; return r; }

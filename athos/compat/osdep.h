@@ -4,6 +4,9 @@
  */
 #ifndef OSDEP_H
 #define OSDEP_H
+#ifdef __WATCOMC__
+#define __attribute__(x)        /* OpenWatcom : pas d'attributs à la GCC */
+#endif
 #include <stdint.h>
 
 void os_log(const char *format, ...) __attribute__((format(printf, 1, 2)));

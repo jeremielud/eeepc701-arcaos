@@ -265,3 +265,25 @@ void athos_arreter(struct athos *a)
 	ath5k_hw_dma_stop(a->ah);
 	a->etat = ATHOS_ARRETE;
 }
+
+/* --- Interruptions --------------------------------------------------------- */
+
+/* Autorise les interruptions de réception et d'émission. */
+void athos_irq_marche(struct athos *a)
+{
+	ath5k_hw_set_imr(a->ah, AR5K_INT_RXOK | AR5K_INT_RXERR | AR5K_INT_RXEOL | AR5K_INT_RXORN |
+			 AR5K_INT_TXOK | AR5K_INT_TXERR | AR5K_INT_TXDESC | AR5K_INT_TXEOL |
+			 AR5K_INT_FATAL | AR5K_INT_GLOBAL);
+}
+
+/* À appeler depuis le gestionnaire d'interruption : rend 1 si l'interruption vient de
+ * la carte (elle est alors acquittée), 0 sinon (ligne partagée). */
+int athos_irq(struct athos *a)
+{
+	enum ath5k_int etat;
+
+	if (!a->ah || !ath5k_hw_is_intr_pending(a->ah))
+		return 0;
+	ath5k_hw_get_isr(a->ah, &etat);         /* lit et efface l'état */
+	return 1;
+}

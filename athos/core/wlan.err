@@ -1,0 +1,4 @@
+../compat/linux/../lxcompat.h(70): Warning! W140: Definition of macro 'min' not identical to previous definition
+../compat/linux/../lxcompat.h(70): Note! I2002: 'min' defined in: /home/jeremie/Projets/eeepc-arcaos/watcom/h/stdlib.h(347)
+../compat/linux/../lxcompat.h(71): Warning! W140: Definition of macro 'max' not identical to previous definition
+../compat/linux/../lxcompat.h(71): Note! I2002: 'max' defined in: /home/jeremie/Projets/eeepc-arcaos/watcom/h/stdlib.h(341)

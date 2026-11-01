@@ -103,7 +103,7 @@ static int ath5k_hw_post(struct ath5k_hw *ah)
  */
 int ath5k_hw_init(struct ath5k_hw *ah)
 {
-	static const u8 zero_mac[ETH_ALEN] = { };
+	static const u8 zero_mac[ETH_ALEN] = { 0 };
 	struct ath_common *common = ath5k_hw_common(ah);
 	struct pci_dev *pdev = ah->pdev;
 	struct ath5k_eeprom_info *ee;
