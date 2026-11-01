@@ -29,7 +29,7 @@ struct athos_tampon {
 	uint32_t desc_phys;
 	uint8_t *data;
 	uint32_t data_phys;
-	int occupe;                     /* émission : en attente du compte rendu */
+	int occupe;                     /* émission : 1 en attente du compte rendu, 2 terminé mais gardé comme point d'accroche de la file */
 };
 
 /* Réseau vu pendant une recherche. */
@@ -64,9 +64,12 @@ struct athos {
 
 	struct athos_tampon rx[ATHOS_NRX];
 	int rx_suivant;
+	int rx_dernier;                 /* queue de la chaîne de réception (auto-liée) */
 	struct athos_tampon tx[ATHOS_NTX];
 	int tx_suivant, tx_ancien;
+	int tx_ancre;                   /* dernier descripteur de la file (-1 : file arrêtée) */
 	int txq;                        /* file d'émission matérielle des données */
+	int irq_actif;                  /* interruptions autorisées (à rétablir après un changement de canal) */
 	uint32_t *tx_lien;              /* ds_link du dernier descripteur en file */
 
 	/* Station 802.11 */

@@ -1,11 +1,11 @@
 /* ATHOSINS.CMD : installe (ou met à jour) le pilote Wi-Fi athos dans ArcaOS, depuis
    le dossier \ATHOS de la clé USB. À lancer d'un double-clic, puis redémarrer.
-   - copie ATHOS.OS2 et ATHOS.NIF dans C:\IBMCOM\MACS, ATHOSLOG.EXE et ATHOSJRN.CMD
+   - copie ATHOS.OS2 et ATHOS.NIF dans C:\IBMCOM\MACS, ATHOSLOG.EXE et ATHOSAGT.CMD
      dans C:\OS2\APPS ;
    - CONFIG.SYS : ajoute DEVICE=C:\IBMCOM\MACS\ATHOS.OS2 après le pilote MMAE ;
    - PROTOCOL.INI : section [ATHOS_nif] (SSID), et TCP/IP rattaché à ATHOS_nif au
      lieu de la carte filaire ;
-   - dossier Démarrage : ATHOSJRN.CMD, qui recopie le journal sur la clé.
+   - dossier Démarrage : ATHOSAGT.CMD, agent de maintenance (voir ce fichier).
    Copies de secours (la première fois seulement) : C:\CONFIG.ATH et
    C:\IBMCOM\PROTOCOL.ATH. En cas de souci au démarrage : Alt+F1 au logo, puis
    ligne de commande, et  copy C:\CONFIG.ATH C:\CONFIG.SYS                       */
@@ -26,7 +26,7 @@ call note date() time() 'installation athos depuis' src', SSID' ssid
 '@copy' src'ATHOS.OS2' boot'\IBMCOM\MACS\ >nul'; call note 'ATHOS.OS2 :' rc
 '@copy' src'ATHOS.NIF' boot'\IBMCOM\MACS\ >nul'; call note 'ATHOS.NIF :' rc
 '@copy' src'ATHOSLOG.EXE' boot'\OS2\APPS\ >nul'; call note 'ATHOSLOG.EXE :' rc
-'@copy' src'ATHOSJRN.CMD' boot'\OS2\APPS\ >nul'; call note 'ATHOSJRN.CMD :' rc
+'@copy' src'ATHOSAGT.CMD' boot'\OS2\APPS\ >nul'; call note 'ATHOSAGT.CMD :' rc
 
 /* 2. CONFIG.SYS */
 cfg = boot'\CONFIG.SYS'
@@ -82,9 +82,10 @@ end
 call ecrire ini
 '@copy' ini src'PROTOCOL.APR >nul'
 
-/* 4. Journal recopié sur la clé au démarrage */
-ok = SysCreateObject('WPProgram', 'Journal athos', '<WP_START>', ,
-  'EXENAME='boot'\OS2\APPS\ATHOSJRN.CMD;MINIMIZED=YES;OBJECTID=<ATHOSJRN>;', 'R')
+/* 4. Agent de maintenance au démarrage (remplace l'ancien script de journal) */
+call SysDestroyObject '<ATHOSJRN>'
+ok = SysCreateObject('WPProgram', 'Agent athos', '<WP_START>', ,
+  'EXENAME='boot'\OS2\APPS\ATHOSAGT.CMD;MINIMIZED=YES;OBJECTID=<ATHOSAGT>;', 'R')
 call note 'objet de démarrage :' ok
 call note 'terminé : redémarrez ArcaOS (clé retirée ou non).'
 say ''

@@ -7,7 +7,7 @@ cd "$(dirname "$0")"
 T=$(mktemp -d)
 cp athos.os2 $T/ATHOS.OS2
 cp athoslog.exe $T/ATHOSLOG.EXE
-for f in install/ATHOS.NIF install/ATHOSINS.CMD install/ATHOSJRN.CMD; do
+for f in install/ATHOS.NIF install/ATHOSINS.CMD install/ATHOSJRN.CMD install/ATHOSAGT.CMD; do
 	iconv -f utf-8 -t cp850//TRANSLIT "$f" | sed 's/\r*$/\r/' > $T/$(basename $f)
 done
 printf 'Livebox-F550\r\n' > $T/SSID.TXT

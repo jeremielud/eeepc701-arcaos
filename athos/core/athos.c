@@ -130,6 +130,7 @@ int athos_canal(struct athos *a, int canal)
 		a->tx[i].occupe = 0;
 	a->tx_suivant = a->tx_ancien = 0;
 	a->tx_lien = NULL;
+	a->tx_ancre = -1;
 
 	ah->curchan = &athos_canaux[canal - 1];
 	ret = ath5k_hw_reset(ah, NL80211_IFTYPE_STATION, ah->curchan, false, false);
@@ -153,6 +154,7 @@ int athos_canal(struct athos *a, int canal)
 		lien = &ds->ds_link;
 	}
 	a->rx_suivant = 0;
+	a->rx_dernier = ATHOS_NRX - 1;
 	ath5k_hw_set_rxdp(ah, a->rx[0].desc_phys);
 	ath5k_hw_start_rx_dma(ah);
 	ath5k_hw_set_opmode(ah, NL80211_IFTYPE_STATION);
@@ -161,6 +163,8 @@ int athos_canal(struct athos *a, int canal)
 	ath5k_hw_set_rx_filter(ah, AR5K_RX_FILTER_UCAST | AR5K_RX_FILTER_BCAST | AR5K_RX_FILTER_MCAST |
 				   AR5K_RX_FILTER_BEACON | AR5K_RX_FILTER_PROM);
 	ath5k_hw_start_rx_pcu(ah);
+	if (a->irq_actif)
+		athos_irq_marche(a);
 	return 0;
 }
 
@@ -171,30 +175,30 @@ int athos_rx(struct athos *a)
 
 	for (;;) {
 		struct athos_tampon *t = &a->rx[a->rx_suivant];
-		struct athos_tampon *suivant = &a->rx[(a->rx_suivant + 1) % ATHOS_NRX];
 		struct ath5k_rx_status rs;
 		int ret;
 
+		/* La puce écrit encore dans ce descripteur (dernier de la chaîne) : on le
+		 * laisse (ath5k_tasklet_rx). */
+		if (ath5k_hw_get_rxdp(ah) == t->desc_phys)
+			break;
 		memset(&rs, 0, sizeof(rs));
 		ret = ah->ah_proc_rx_desc(ah, t->desc, &rs);
 		if (ret == -EINPROGRESS)
 			break;
-		/* Le matériel peut avoir rempli ce descripteur alors qu'il est encore le
-		 * dernier de la chaîne (auto-lié) : on attend que le suivant soit pris
-		 * (comme ath5k_rx_tasklet). */
-		if (t->desc->ds_link == t->desc_phys) {
-			struct ath5k_rx_status rs2;
-			if (ah->ah_proc_rx_desc(ah, suivant->desc, &rs2) == -EINPROGRESS)
-				break;
-		}
 		if (!ret && !rs.rs_status && rs.rs_datalen >= 10 + FCS_LEN) {
 			a->rx_trames++;
 			wlan_recevoir(a, t->data, rs.rs_datalen - FCS_LEN, rs.rs_rssi - 95);
 		} else {
 			a->rx_erreurs++;
 		}
+		/* Le descripteur rendu devient la nouvelle queue de la chaîne : auto-lié, et
+		 * l'ancienne queue pointe sur lui (ath5k_rxbuf_setup). */
 		memset(&t->desc->ud, 0, sizeof(t->desc->ud));
+		t->desc->ds_link = t->desc_phys;
 		ath5k_hw_setup_rx_desc(ah, t->desc, ah->common.rx_bufsize, 0);
+		a->rx[a->rx_dernier].desc->ds_link = t->desc_phys;
+		a->rx_dernier = a->rx_suivant;
 		a->rx_suivant = (a->rx_suivant + 1) % ATHOS_NRX;
 		n++;
 	}
@@ -223,11 +227,17 @@ int athos_tx(struct athos *a, const uint8_t *trame, int longueur, int debit)
 	ds->ds_link = 0;
 	ds->ds_data = t->data_phys;
 	t->occupe = 1;
-	if (a->tx_lien)
+	/* La file reste accrochée à son dernier descripteur, même terminé : la puce
+	 * relit son lien quand on relance la file (ath5k_txbuf_setup). */
+	if (a->tx_lien) {
 		*a->tx_lien = t->desc_phys;
-	else
+		if (a->tx_ancre >= 0 && a->tx[a->tx_ancre].occupe == 2)
+			a->tx[a->tx_ancre].occupe = 0;
+	} else {
 		ath5k_hw_set_txdp(ah, a->txq, t->desc_phys);
+	}
 	a->tx_lien = &ds->ds_link;
+	a->tx_ancre = a->tx_suivant;
 	ath5k_hw_start_tx_dma(ah, a->txq);
 	a->tx_suivant = (a->tx_suivant + 1) % ATHOS_NTX;
 	return 0;
@@ -238,22 +248,25 @@ int athos_tx_fini(struct athos *a)
 	struct ath5k_hw *ah = a->ah;
 	int n = 0;
 
-	while (a->tx[a->tx_ancien].occupe) {
+	for (int k = 0; k < ATHOS_NTX; k++) {
 		struct athos_tampon *t = &a->tx[a->tx_ancien];
 		struct ath5k_tx_status ts;
 
-		memset(&ts, 0, sizeof(ts));
-		if (ah->ah_proc_tx_desc(ah, t->desc, &ts) == -EINPROGRESS)
-			break;
-		if (ts.ts_status)
-			a->tx_echecs++;
-		else
-			a->tx_trames++;
-		t->occupe = 0;
-		if (a->tx_lien == &t->desc->ds_link)
-			a->tx_lien = NULL;      /* file vide : le prochain repart de TXDP */
+		if (t->occupe != 1 && a->tx_ancien == a->tx_suivant)
+			break;                  /* rien d'autre en file */
+		if (t->occupe == 1) {
+			memset(&ts, 0, sizeof(ts));
+			if (ah->ah_proc_tx_desc(ah, t->desc, &ts) == -EINPROGRESS)
+				break;
+			if (ts.ts_status)
+				a->tx_echecs++;
+			else
+				a->tx_trames++;
+			/* Le dernier de la file reste réservé comme point d'accroche. */
+			t->occupe = (a->tx_ancien == a->tx_ancre) ? 2 : 0;
+			n++;
+		}
 		a->tx_ancien = (a->tx_ancien + 1) % ATHOS_NTX;
-		n++;
 	}
 	return n;
 }
@@ -271,6 +284,7 @@ void athos_arreter(struct athos *a)
 /* Autorise les interruptions de réception et d'émission. */
 void athos_irq_marche(struct athos *a)
 {
+	a->irq_actif = 1;
 	ath5k_hw_set_imr(a->ah, AR5K_INT_RXOK | AR5K_INT_RXERR | AR5K_INT_RXEOL | AR5K_INT_RXORN |
 			 AR5K_INT_TXOK | AR5K_INT_TXERR | AR5K_INT_TXDESC | AR5K_INT_TXEOL |
 			 AR5K_INT_FATAL | AR5K_INT_GLOBAL);

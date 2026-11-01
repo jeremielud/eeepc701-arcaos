@@ -19,7 +19,7 @@ static unsigned char tampon[16384 + 4];
 int main(void)
 {
 	HFILE h;
-	ULONG action, taille, etat[6];
+	ULONG action, taille, etat[14];
 	APIRET rc;
 
 	rc = DosOpen("ATHOS$", &h, &action, 0, 0, OPEN_ACTION_OPEN_IF_EXISTS,
@@ -32,6 +32,11 @@ int main(void)
 	if (!DosDevIOCtl(h, IOCTL_CATEGORIE, IOCTL_ETAT, 0, 0, 0, etat, sizeof(etat), &taille))
 		printf("état : %s, canal %lu, reçues %lu, émises %lu, échecs %lu, erreurs %lu\n",
 		       etat[0] < 5 ? etats[etat[0]] : "?", etat[1], etat[2], etat[3], etat[4], etat[5]);
+	if (!DosDevIOCtl(h, IOCTL_CATEGORIE, IOCTL_ETAT, 0, 0, 0, etat, sizeof(etat), &taille) && taille >= sizeof(etat))
+		printf("pile : remises %lu (gardées %lu, refusées %lu, perdues faute de place %lu) ; à émettre %lu (refusées %lu)\n",
+		       etat[6], etat[7], etat[8], etat[9], etat[10], etat[11]);
+	if (taille >= sizeof(etat))
+		printf("interruptions %lu, tops de minuterie %lu\n", etat[12], etat[13]);
 	taille = sizeof(tampon);
 	rc = DosDevIOCtl(h, IOCTL_CATEGORIE, IOCTL_JOURNAL, 0, 0, 0, tampon, sizeof(tampon), &taille);
 	if (rc) {

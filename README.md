@@ -14,7 +14,7 @@ y compris la carte Wi-Fi Atheros AR2425, pour laquelle aucun pilote OS/2 n'exist
 | Volume / sourdine aux touches Fn (`eeekeys`) | ⏳ à confirmer |
 | Ethernet Attansic L2 (MultiMac MMAE) | ⏳ non testé (pas de câble) |
 | Clés USB et lecteur SD | configurés |
-| **Wi-Fi Atheros AR2425** | 🚧 pilote **athos** en cours d'écriture |
+| **Wi-Fi Atheros AR2425** | ✅ pilote **athos** : DHCP et ping dans ArcaOS (réseaux ouverts) |
 
 ## Contenu
 
@@ -62,4 +62,5 @@ Avancement :
 - [x] Émission, authentification, association (réseau ouvert) et données : le 701 obtient une offre DHCP de la box
 - [ ] WPA2
 - [x] Cœur compilable par OpenWatcom ; pilote NDIS athos.os2 (kit Drv32) compilé, pas encore essayé dans ArcaOS
-- [ ] Essai dans ArcaOS, utilitaire graphique de choix du réseau, accès SSH dans ArcaOS
+- [x] Dans ArcaOS : association, adresse DHCP, ping de la box
+- [ ] Accès SSH dans ArcaOS, utilitaire graphique de choix du réseau

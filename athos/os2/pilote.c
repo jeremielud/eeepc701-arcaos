@@ -37,7 +37,6 @@ static char ssid_voulu[33] = "";
 static struct athos carte;
 static PCI_DEVICEINFO pci;
 static int irq_posee;
-static ULONG minuterie_id;
 
 struct indication {
 	RxBufOne desc;                  /* décrit la trame pour NdisRcvChain */
@@ -46,6 +45,11 @@ struct indication {
 };
 static struct indication ind[NRXIND];
 static UCHAR indiquer;
+/* Compteurs de mise au point : trames remises à la pile, et ce qu'elle en fait. */
+static ULONG nb_irq, nb_tic;
+static int indications_ok = 1;
+static volatile int en_liaison;          /* recherche/association en cours : pas de scrutation concurrente */
+static ULONG nb_indiquees, nb_gardees, nb_refusees, nb_pleines, nb_tx_pile, nb_tx_refus;
 
 extern char athos_journal[];
 extern unsigned long athos_journal_pos;
@@ -58,10 +62,15 @@ static void recevoir(void *ctx, const uint8_t *eth, int len)
 	ULONG rc;
 
 	(void)ctx;
+	if (!indications_ok) {
+		nb_pleines++;
+		return;
+	}
 	for (i = 0; i < NRXIND && ind[i].prete; i++)
 		;
 	if (i == NRXIND) {
 		AdapterSS.MssRFLack++;
+		nb_pleines++;
 		return;
 	}
 	memcpy(ind[i].tampon, eth, len);
@@ -79,8 +88,13 @@ static void recevoir(void *ctx, const uint8_t *eth, int len)
 	indiquer = 0xff;
 	ind[i].prete = 1;
 	rc = NdisRcvChain(&indiquer, &ind[i].desc, i, len);
-	if (rc != WAIT_FOR_RELEASE)
+	nb_indiquees++;
+	if (rc == WAIT_FOR_RELEASE)
+		nb_gardees++;
+	else
 		ind[i].prete = 0;               /* la pile a déjà copié la trame */
+	if (rc != SUCCESS && rc != WAIT_FOR_RELEASE)
+		nb_refusees++;
 }
 
 int __syscall NdisDriverReleaseRx(USHORT pos)
@@ -125,6 +139,7 @@ int __syscall NdisDriverStartXmit(struct TxBufDesc *pDsc, ULONG ProtID_ReqHandle
 		}
 		len += b->TxDataLen;
 	}
+	nb_tx_pile++;
 	if (len < ETH_HLEN)
 		return INVALID_PARAMETER;
 	/* La file d'émission est aussi touchée par la scrutation (interruption) : on
@@ -133,6 +148,7 @@ int __syscall NdisDriverStartXmit(struct TxBufDesc *pDsc, ULONG ProtID_ReqHandle
 	i = wlan_envoyer(&carte, trame_tx, len);
 	_enable();
 	if (i) {
+		nb_tx_refus++;
 		AdapterSS.MssSFHW++;
 		return OUT_OF_RESOURCE;
 	}
@@ -141,36 +157,46 @@ int __syscall NdisDriverStartXmit(struct TxBufDesc *pDsc, ULONG ProtID_ReqHandle
 	return SUCCESS;                         /* trame copiée : pas de TransmitConfirm */
 }
 
-/* --- Interruption ----------------------------------------------------------- */
+/* --- Interruption et minuterie ------------------------------------------------ */
+/* Scrutation : toujours (comptes rendus d'émission, réception) ; les trames ne sont
+ * remises à la pile que si elle n'a pas suspendu les indications. */
+static void scruter(void)
+{
+	ULONG deja_coupees;
+
+	if (en_liaison)
+		return;
+	deja_coupees = NdisIndicationsTestAndOff();
+
+	indications_ok = !deja_coupees;
+	athos_poll(&carte);
+	indications_ok = 1;
+	if (!deja_coupees) {
+		NdisIndicationsOn();
+		NdisIndicationsComplete();
+	}
+}
+
 #pragma aux interruption parm [eax]
 static int interruption(ULONG donnee)
 {
 	(void)donnee;
 	if (!athos_irq(&carte))
 		return 0;                       /* pas pour nous (ligne partagée) */
+	nb_irq++;
 	_disable();
 	Dev32Help_EOI(pci.irq);
 	_enable();
-	if (!NdisIndicationsTestAndOff()) {
-		athos_poll(&carte);
-		NdisIndicationsOn();
-		NdisIndicationsComplete();
-	}
+	scruter();
 	return 1;
 }
 
-/* Minuterie de 31 ms : relances de l'association, réception si une interruption a
- * été perdue, et reconnexion après une désassociation. */
-static void __syscall minuterie(ULONG a, ULONG b)
+/* Minuterie périodique du noyau (tous les 2 tops de 31 ms) : relances de
+ * l'association, réception si une interruption a été perdue. */
+static void tic(void)
 {
-	(void)a;
-	(void)b;
-	if (!NdisIndicationsTestAndOff()) {
-		athos_poll(&carte);
-		NdisIndicationsOn();
-		NdisIndicationsComplete();
-	}
-	Timer_StartTimerMS(&minuterie_id, 31, minuterie, 0);    /* minuterie à un coup : on la relance */
+	nb_tic++;
+	scruter();
 }
 
 /* --- Appels du module NDIS du kit ----------------------------------------------- */
@@ -200,6 +226,7 @@ int __syscall NdisDriverOpen(void)
 		os_log("athos : aucun SSID dans PROTOCOL.INI\n");
 		return 0;
 	}
+	en_liaison = 1;
 	for (essai = 1; essai <= 4; essai++) {
 		n = wlan_rechercher(&carte, 400);
 		os_log("athos : recherche %d, %d réseaux :\n", essai, n);
@@ -208,10 +235,12 @@ int __syscall NdisDriverOpen(void)
 			       carte.reseaux[i].canal, carte.reseaux[i].signal, secu[carte.reseaux[i].securite & 3]);
 		if (wlan_rejoindre(&carte, ssid_voulu) == 0) {
 			os_log("athos : associé à « %s »\n", ssid_voulu);
+			en_liaison = 0;
 			return 0;
 		}
 	}
 	os_log("athos : association à « %s » impossible\n", ssid_voulu);
+	en_liaison = 0;
 	return 0;
 }
 
@@ -225,7 +254,9 @@ int __syscall NdisDriverStartIrq(void)
 	}
 	irq_posee = 1;
 	athos_irq_marche(&carte);
-	Timer_StartTimerMS(&minuterie_id, 31, minuterie, 0);
+	if (Dev32Help_TickCount((void *)tic, 2))
+		os_log("athos : minuterie indisponible\n");
+	os_log("athos : interruption %d posée, minuterie en marche\n", pci.irq);
 	athos_journal_ecran = 0;
 	return 0;
 }
@@ -284,8 +315,7 @@ static void StrategyInit(REQPACKET *prp)
 
 	UtSetDriverName(cDevName);
 	TimeInit();
-	Timer_InitTimer(2);
-	os_log("athos : pilote Wi-Fi AR2425 pour OS/2 (essai)\n");
+	os_log("athos : pilote Wi-Fi AR2425 pour OS/2 (essai, compilé le %s à %s)\n", __DATE__, __TIME__);
 	rc = NdisInit("ATHOS.MSG");
 	if (rc < 0) {
 		os_log("athos : section ATHOS$ absente de PROTOCOL.INI (%d)\n", rc);
@@ -336,8 +366,18 @@ static void StrategyIoctl(REQPACKET *prp)
 		break;
 	}
 	case IOCTL_ETAT:
-		if (taille >= sizeof(ULONG) * 6) {
+		if (taille >= sizeof(ULONG) * 12) {
 			ULONG *e = (ULONG *)donnees;
+			e[6] = nb_indiquees;
+			e[7] = nb_gardees;
+			e[8] = nb_refusees;
+			e[9] = nb_pleines;
+			e[10] = nb_tx_pile;
+			e[11] = nb_tx_refus;
+			if (taille >= sizeof(ULONG) * 14) {
+				e[12] = nb_irq;
+				e[13] = nb_tic;
+			}
 			e[0] = carte.etat;
 			e[1] = carte.canal;
 			e[2] = carte.rx_trames;
